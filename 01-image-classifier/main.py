@@ -31,28 +31,39 @@ def inspect_obj(obj):
     if len(members) > 20:
         print(f"  ... and {len(members) - 20} more")
 
-epochs = 40
+epochs = 80
 
 
 class CNN(torch.nn.Module):
     def __init__(self):
         super().__init__()
-        self.conv1 = torch.nn.Conv2d(in_channels=3, out_channels=16, kernel_size=3, padding=1)
-        self.conv2 = torch.nn.Conv2d(in_channels=16, out_channels=32, kernel_size=3, padding=1)
-        self.linear = torch.nn.Linear(in_features=int(32*8*8), out_features=10)
-        self.dropout = torch.nn.Dropout(0.2)
+        self.conv1 = torch.nn.Conv2d(in_channels=3, out_channels=32, kernel_size=3, padding=1)
+        self.conv2 = torch.nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3, padding=1)
+        self.conv3 = torch.nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3, padding=1)
+        self.BN1 = torch.nn.BatchNorm2d(32)
+        self.BN2 = torch.nn.BatchNorm2d(64)
+        self.BN3 = torch.nn.BatchNorm2d(128)
+        self.linear = torch.nn.LazyLinear(out_features=10)
+        self.dropout = torch.nn.Dropout(0.5)
 
     def forward(self, x):
         x = self.conv1(x)
+        x = self.BN1(x)
         x = torch.nn.functional.relu(x)
         x = torch.nn.functional.max_pool2d(x, kernel_size=2)
         x = self.conv2(x)
+        x = self.BN2(x)
+        x = torch.nn.functional.relu(x)
+        x = torch.nn.functional.max_pool2d(x, kernel_size=2)
+        x = self.conv3(x)
+        x = self.BN3(x)
         x = torch.nn.functional.relu(x)
         x = torch.nn.functional.max_pool2d(x, kernel_size=2)
         x = x.flatten(start_dim=1)
         x = self.dropout(x)
         x = self.linear(x)
         return x
+
 
 
 transform_to_tensor = v2.Compose([v2.PILToTensor(), v2.ToDtype(torch.float32, scale=True)])
@@ -66,6 +77,7 @@ dl_test = torch.utils.data.DataLoader(dataset=ds_test, batch_size=64, shuffle=Fa
 model = CNN().to(device)
 loss_fn = torch.nn.CrossEntropyLoss()
 optimizer = torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
+scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs)
 
 model.train()
 for epoch in range(epochs):
@@ -77,6 +89,7 @@ for epoch in range(epochs):
         err += loss.item()
         loss.backward()
         optimizer.step()
+    scheduler.step()
 
     err /= len(dl_train)
 
