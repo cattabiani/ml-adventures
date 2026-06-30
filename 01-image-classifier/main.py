@@ -5,8 +5,7 @@ from torchvision.transforms import v2
 from pathlib import Path
 
 data_path = Path("./data").absolute()
-
-device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
+device = torch.device("cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu"))
 print(f"device: {device}")
 
 def inspect_obj(obj):
