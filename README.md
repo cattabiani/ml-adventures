@@ -12,12 +12,13 @@ An AI-powered learning project. I'm a senior software engineer (C++/Python, High
 
 ## Roadmap
 
-### Phase 1: Core ML
-Get fluent in PyTorch, modern training workflows, and neural network fundamentals.
+### Phase 1: Core ML & RL
+Get fluent in PyTorch, modern training workflows, and Reinforcement Learning (RL) fundamentals.
 
-- [ ] Image classifier (Convolutional Neural Network (CNN) on CIFAR-10)
-- [ ] Tabular Q-learning agent (Connect Four — refresh Reinforcement Learning (RL) and Bellman equation)
-- [ ] Deep Q-Network (DQN) agent (same game, upgrade Q-table to a neural net)
+- [x] Image classifier (Convolutional Neural Network (CNN) on CIFAR-10) — 85% test accuracy
+- [x] Tabular Q-learning agent (Tic-Tac-Toe — Bellman equation, self-play)
+- [x] Deep Q-Network (DQN) agent (Tic-Tac-Toe — replay buffer, target network)
+- [ ] DQN on CartPole (single-agent, dense reward, Gymnasium environment)
 
 ### Phase 2: Transformers & Embeddings
 Understand attention, embeddings, and retrieval systems.
@@ -40,4 +41,9 @@ I have 8+ years of production C++/Python, a PhD in Computational Mechanics, and 
 
 ## Progress
 
-*Nothing yet — just getting started.*
+| # | Project | Status | Key Result |
+|---|---------|--------|------------|
+| 01 | Image Classifier (CIFAR-10) | ✅ | 85% test accuracy |
+| 02 | Tic-Tac-Toe (Tabular Q-Learning) | ✅ | Never loses vs random |
+| 03 | Tic-Tac-Toe (DQN) | ✅ | Never loses vs random |
+| 04 | CartPole (DQN) | ⬜ | — |
