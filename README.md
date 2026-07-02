@@ -18,11 +18,12 @@ Get fluent in PyTorch, modern training workflows, and Reinforcement Learning (RL
 - [x] Image classifier (Convolutional Neural Network (CNN) on CIFAR-10) — 85% test accuracy
 - [x] Tabular Q-learning agent (Tic-Tac-Toe — Bellman equation, self-play)
 - [x] Deep Q-Network (DQN) agent (Tic-Tac-Toe — replay buffer, target network)
-- [ ] DQN on CartPole (single-agent, dense reward, Gymnasium environment)
+- [x] DQN on CartPole (single-agent, dense reward, Gymnasium environment)
 
 ### Phase 2: Transformers & Embeddings
-Understand attention, embeddings, and retrieval systems.
+Understand attention, embeddings, and generative models.
 
+- [ ] Character-level GPT (build a transformer from scratch, train on GPU)
 - [ ] Fine-tune a small language or vision model on a custom task
 - [ ] Semantic search / retrieval system
 
@@ -46,4 +47,5 @@ I have 8+ years of production C++/Python, a PhD in Computational Mechanics, and 
 | 01 | Image Classifier (CIFAR-10) | ✅ | 85% test accuracy |
 | 02 | Tic-Tac-Toe (Tabular Q-Learning) | ✅ | Never loses vs random |
 | 03 | Tic-Tac-Toe (DQN) | ✅ | Never loses vs random |
-| 04 | CartPole (DQN) | ⬜ | — |
+| 04 | CartPole (DQN) | ✅ | 500/500 perfect |
+| 05 | Character-Level GPT | ⬜ | — |
