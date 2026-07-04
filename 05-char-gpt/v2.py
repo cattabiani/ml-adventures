@@ -67,6 +67,15 @@ class Head(torch.nn.Module):
         out = wei @ V
         return out
 
+class MultiHead(torch.nn.Module):
+    def __init__(self, num_heads, head_size):
+        super().__init__()
+        self.heads = torch.nn.ModuleList([Head(head_size) for _ in range(num_heads)])
+
+    def forward(self, x):
+        return torch.cat([h(x) for h in self.heads], dim=-1)
+
+    
 
 
 # model
@@ -75,7 +84,7 @@ class BigramLM(torch.nn.Module):
         super().__init__()
         self.token_embedding_table = torch.nn.Embedding(vocabular_size, n_embed)
         self.position_embedding_table = torch.nn.Embedding(block_size, n_embed)
-        self.sa_head = Head(n_embed)
+        self.sa_heads = MultiHead(4, n_embed//4)
         self.lm_head = torch.nn.Linear(n_embed, vocabular_size)
     
     def forward(self, idxs, targets=None):
@@ -83,7 +92,7 @@ class BigramLM(torch.nn.Module):
         pos_embeds = self.position_embedding_table(torch.arange(T, device=device))
         token_embeds = self.token_embedding_table(idxs) # (B, T, C)
         x = token_embeds+pos_embeds
-        x = self.sa_head(x)
+        x = self.sa_heads(x)
         logits = self.lm_head(x) # (B, T, vocab_size)
         B, T, C = logits.shape
         logits2 = logits.view(B*T, C)
