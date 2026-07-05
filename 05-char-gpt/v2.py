@@ -8,13 +8,16 @@ torch.manual_seed(1337)
 
 # hyper parameters
 
-batch_size = 32
-block_size = 8
-learning_rate = 1e-3
+batch_size = 64
+block_size = 256
+learning_rate = 3e-4
 max_iters = 5000
-eval_interval = 300
+eval_interval = 500
 eval_iters = 200
-n_embed = 32
+n_embed = 384
+n_head = 6
+n_layer = 6
+dropout = 0.2
 # data
 with open('data/input.txt','r', encoding='utf-8') as f:
     text = f.read()
@@ -53,6 +56,7 @@ class Head(torch.nn.Module):
         self.qW = torch.nn.Linear(n_embed, head_size, bias=False)
         self.vW = torch.nn.Linear(n_embed, head_size, bias=False)
         self.register_buffer('tril', torch.tril(torch.ones(block_size, block_size)))
+        self.dropout = torch.nn.Dropout(dropout)
 
     def forward(self, x):
         B, T, C = x.shape
@@ -63,6 +67,7 @@ class Head(torch.nn.Module):
         wei = Q @ K.transpose(-2, -1) * K.shape[-1]**-0.5
         wei = wei.masked_fill(self.tril[:T, :T] == 0, float('-inf'))
         wei = torch.nn.functional.softmax(wei, dim=-1)
+        wei = self.dropout(wei)
 
         out = wei @ V
         return out
@@ -71,17 +76,24 @@ class MultiHead(torch.nn.Module):
     def __init__(self, num_heads, head_size):
         super().__init__()
         self.heads = torch.nn.ModuleList([Head(head_size) for _ in range(num_heads)])
+        self.proj = torch.nn.Linear(n_embed, n_embed)
+        self.dropout = torch.nn.Dropout(dropout)
 
     def forward(self, x):
-        return torch.cat([h(x) for h in self.heads], dim=-1)
+        x = torch.cat([h(x) for h in self.heads], dim=-1)
+        x = self.proj(x)
+        x = self.dropout(x)
+        return x
 
 
 class FeedForward(torch.nn.Module):
     def __init__(self, n_embed):
         super().__init__()
         self.net = torch.nn.Sequential(
-            torch.nn.Linear(n_embed, n_embed),
-            torch.nn.ReLU()
+            torch.nn.Linear(n_embed, 4*n_embed),
+            torch.nn.ReLU(),
+            torch.nn.Linear(4*n_embed, n_embed),
+            torch.nn.Dropout(dropout)
         )
     
     def forward(self, x):
@@ -92,10 +104,12 @@ class Block(torch.nn.Module):
         super().__init__()
         self.sa_heads = MultiHead(n_heads, n_embed//n_heads)
         self.ffwd = FeedForward(n_embed)
+        self.ln1 = torch.nn.LayerNorm(n_embed)
+        self.ln2 = torch.nn.LayerNorm(n_embed)
 
     def forward(self, x):
-        x = self.sa_heads(x)
-        x = self.ffwd(x)
+        x = x+self.sa_heads(self.ln1(x))
+        x = x+self.ffwd(self.ln2(x))
         return x
 
 
@@ -105,7 +119,7 @@ class BigramLM(torch.nn.Module):
         super().__init__()
         self.token_embedding_table = torch.nn.Embedding(vocabular_size, n_embed)
         self.position_embedding_table = torch.nn.Embedding(block_size, n_embed)
-        self.blocks = torch.nn.Sequential(*[Block(n_embed, 4) for _ in range(5)])
+        self.blocks = torch.nn.Sequential(*[Block(n_embed, n_head) for _ in range(n_layer)], torch.nn.LayerNorm(n_embed))
         self.lm_head = torch.nn.Linear(n_embed, vocabular_size)
     
     def forward(self, idxs, targets=None):
@@ -165,5 +179,6 @@ for iter in range(max_iters):
         print(f"step {iter}: train loss {losses['train']:.4f} val loss {losses['val']:.4f}")
 
 context = torch.zeros((1,1), dtype=torch.long, device=device)
+m.eval()
 l = m.generate(context, max_new_tokens=500)
 print(decode(l[0].tolist()))
