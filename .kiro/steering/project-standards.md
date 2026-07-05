@@ -6,6 +6,9 @@
 - Shared utilities go in `shared/`
 - Top-level README tracks progress
 
+## Git Workflow
+- Always work and commit directly on the `main` branch. Do not create new branches.
+
 ## Code
 - PyTorch is the primary framework
 - Keep code clean and well-documented — this is a public portfolio
