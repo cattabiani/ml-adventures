@@ -75,7 +75,28 @@ class MultiHead(torch.nn.Module):
     def forward(self, x):
         return torch.cat([h(x) for h in self.heads], dim=-1)
 
+
+class FeedForward(torch.nn.Module):
+    def __init__(self, n_embed):
+        super().__init__()
+        self.net = torch.nn.Sequential(
+            torch.nn.Linear(n_embed, n_embed),
+            torch.nn.ReLU()
+        )
     
+    def forward(self, x):
+        return self.net(x)
+
+class Block(torch.nn.Module):
+    def __init__(self, n_embed, n_heads):
+        super().__init__()
+        self.sa_heads = MultiHead(n_heads, n_embed//n_heads)
+        self.ffwd = FeedForward(n_embed)
+
+    def forward(self, x):
+        x = self.sa_heads(x)
+        x = self.ffwd(x)
+        return x
 
 
 # model
@@ -84,7 +105,7 @@ class BigramLM(torch.nn.Module):
         super().__init__()
         self.token_embedding_table = torch.nn.Embedding(vocabular_size, n_embed)
         self.position_embedding_table = torch.nn.Embedding(block_size, n_embed)
-        self.sa_heads = MultiHead(4, n_embed//4)
+        self.blocks = torch.nn.Sequential(*[Block(n_embed, 4) for _ in range(5)])
         self.lm_head = torch.nn.Linear(n_embed, vocabular_size)
     
     def forward(self, idxs, targets=None):
@@ -92,7 +113,7 @@ class BigramLM(torch.nn.Module):
         pos_embeds = self.position_embedding_table(torch.arange(T, device=device))
         token_embeds = self.token_embedding_table(idxs) # (B, T, C)
         x = token_embeds+pos_embeds
-        x = self.sa_heads(x)
+        x = self.blocks(x)
         logits = self.lm_head(x) # (B, T, vocab_size)
         B, T, C = logits.shape
         logits2 = logits.view(B*T, C)
