@@ -3,9 +3,9 @@
 ## Tasks
 
 ### Task 1: Data Generation Pipeline
-- Set up a script to parse LaTeX equations and translate them to SymPy/Python expressions using `latex2sympy2` [ ]
-- Write a renderer script (using matplotlib or sympy.preview) to convert LaTeX strings into PNG images [ ]
-- Package the generated images and code strings into a Hugging Face Dataset format [ ]
+- Set up a script to parse LaTeX equations and translate them to SymPy/Python expressions using `latex2sympy2` [x]
+- Write a renderer script (using matplotlib or sympy.preview) to convert LaTeX strings into PNG images [x]
+- Package the generated images and code strings into a Hugging Face Dataset format [x]
 
 ### Task 2: Environment & Base Model Setup
 - Install dependencies: `transformers`, `peft`, `trl`, `latex2sympy2`, `sympy`, `accelerate`, `bitsandbytes` [ ]
