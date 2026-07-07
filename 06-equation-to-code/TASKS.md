@@ -8,7 +8,7 @@
 - Package the generated images and code strings into a Hugging Face Dataset format [x]
 
 ### Task 2: Environment & Base Model Setup
-- Install dependencies: `transformers`, `peft`, `trl`, `latex2sympy2`, `sympy`, `accelerate`, `bitsandbytes` [ ]
+- Install dependencies: `transformers`, `peft`, `trl`, `latex2sympy2`, `sympy`, `accelerate`, `bitsandbytes` [x]
 - Load a small VLM (e.g., `Qwen/Qwen2-VL-2B-Instruct`) and verify zero-shot performance on a sample equation image [ ]
 
 ### Task 3: QLoRA Fine-Tuning
