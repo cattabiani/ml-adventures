@@ -9,6 +9,7 @@ An AI-powered learning project. I'm a senior software engineer (C++/Python, High
 - **Projects are real and complete** — each one trains a model, shows results, and has a clear README.
 - **Training runs** on Kaggle/Colab free-tier Graphics Processing Units (GPUs).
 - **AI steering** lives in `.kiro/steering/` — it sets ground rules for how the AI interacts with me (teacher, not substitute).
+- **Code is left unpolished on purpose** to make it clear that it is my own work and not the work of an AI.
 
 ## Roadmap
 

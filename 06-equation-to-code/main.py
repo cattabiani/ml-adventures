@@ -3,8 +3,8 @@ from datasets import load_from_disk, load_dataset
 import torch
 from latex2sympy2_extended import latex2sympy
 from transformers import Qwen2VLForConditionalGeneration, AutoProcessor, BitsAndBytesConfig
-from qwen_vl_utils import process_vision_info
 model_id = "Qwen/Qwen2-VL-2B-Instruct"
+import sympy as sp
 
 
 def collate_fn(batch):
@@ -31,14 +31,43 @@ def preprocess_batch(processor, data):
         processor.apply_chat_template(m, tokenize=False, add_generation_prompt=True)
         for m in messages_batch
     ]
-    image_inputs, video_inputs = process_vision_info(messages)
-    text_inputs = processor(
+
+    inputs = processor(
         text=texts,
         images=data["images"],
         padding=True,
         return_tensors="pt"
     )
-    return text_inputs, image_inputs, video_inputs
+    return inputs
+
+def postproc_output_ids(processor, inputs, output_ids):
+    # Trim the prompt tokens
+    generated_ids_trimmed = [
+        out_ids[len(in_ids):] 
+        for in_ids, out_ids in zip(inputs.input_ids, output_ids)
+    ]
+    # Decode the output
+    predictions = processor.batch_decode(
+        generated_ids_trimmed, 
+        skip_special_tokens=True, 
+        clean_up_tokenization_spaces=False
+    )
+    return predictions
+
+def compare(predictions, data):
+    # 2. Compare with ground truths
+    ground_truths = data["sympy_formulas"]
+    
+    for pred, gt in zip(predictions, ground_truths):
+        try:
+            pred_expr = sp.sympify(pred.strip())
+            gt_expr = sp.sympify(gt)
+            
+            # Check algebraic equivalence
+            is_equivalent = sp.simplify(pred_expr - gt_expr) == 0
+            print(f"Prediction: {pred} | GT: {gt} | Equivalent: {is_equivalent}")
+        except Exception as e:
+            print(f"Failed to parse prediction '{pred}': {e}")
 
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -79,13 +108,8 @@ model = Qwen2VLForConditionalGeneration.from_pretrained(
 processor = AutoProcessor.from_pretrained(model_id)
 
 for data in dataloader:
-    text_inputs, image_inputs, video_inputs = preprocess_batch(processor, data)
-    inputs = processor(
-        text=text_inputs,
-        images=image_inputs,
-        videos=video_inputs,
-        padding=True,
-        return_tensors="pt"
-    )
+    inputs = preprocess_batch(processor, data)
     output_ids = model.generate(**inputs.to(device), max_new_tokens=100)
+    predictions = postproc_output_ids(processor, inputs, output_ids)
+    compare(predictions, data)
     exit()
