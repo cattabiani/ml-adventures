@@ -3,6 +3,7 @@ from datasets import load_from_disk, load_dataset
 import torch
 from latex2sympy2_extended import latex2sympy
 from transformers import Qwen2VLForConditionalGeneration, AutoProcessor, BitsAndBytesConfig
+from qwen_vl_utils import process_vision_info
 model_id = "Qwen/Qwen2-VL-2B-Instruct"
 
 
@@ -30,13 +31,14 @@ def preprocess_batch(processor, data):
         processor.apply_chat_template(m, tokenize=False, add_generation_prompt=True)
         for m in messages_batch
     ]
-    inputs = processor(
+    image_inputs, video_inputs = process_vision_info(messages)
+    text_inputs = processor(
         text=texts,
         images=data["images"],
         padding=True,
         return_tensors="pt"
     )
-    return inputs
+    return text_inputs, image_inputs, video_inputs
 
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -77,6 +79,13 @@ model = Qwen2VLForConditionalGeneration.from_pretrained(
 processor = AutoProcessor.from_pretrained(model_id)
 
 for data in dataloader:
-    inputs = preprocess_batch(processor, data)
+    text_inputs, image_inputs, video_inputs = preprocess_batch(processor, data)
+    inputs = processor(
+        text=text_inputs,
+        images=image_inputs,
+        videos=video_inputs,
+        padding=True,
+        return_tensors="pt"
+    )
     output_ids = model.generate(**inputs.to(device), max_new_tokens=100)
     exit()
