@@ -13,6 +13,32 @@ def collate_fn(batch):
     }
 
 
+def preprocess_batch(processor, data):
+    messages_batch = [
+        [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "image", "image": img},
+                    {"type": "text", "text": "Convert this equation into Python code."},
+                ],
+            }
+        ]
+        for img in data["images"]
+    ]
+    texts = [
+        processor.apply_chat_template(m, tokenize=False, add_generation_prompt=True)
+        for m in messages_batch
+    ]
+    inputs = processor(
+        text=texts,
+        images=data["images"],
+        padding=True,
+        return_tensors="pt"
+    )
+    return inputs
+
+
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 torch.manual_seed(1337)
 
@@ -33,11 +59,6 @@ val_data = dataset['test']
 dataloader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, shuffle=True, collate_fn=collate_fn)
 
 
-# for data in dataloader:
-#     data['images'][0].show()
-#     print(data['sympy_formulas'][0])
-#     exit()
-
 
 
 # Configure 4-bit quantization
@@ -54,40 +75,8 @@ model = Qwen2VLForConditionalGeneration.from_pretrained(
     device_map="auto"
 )
 processor = AutoProcessor.from_pretrained(model_id)
-print("Model loaded successfully in 4-bit.")
 
-# Take a sample from the validation set
-sample = val_data[0]
-image = sample["image"]
-ground_truth = sample["sympy_formula"]
-
-# Format the message
-messages = [
-    {
-        "role": "user",
-        "content": [
-            {"type": "image"},
-            {"type": "text", "text": "Identify the mathematical expression in this image and write it in SymPy syntax."}
-        ]
-    }
-]
-text = processor.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
-inputs = processor(
-    text=[text],
-    images=[image],
-    padding=True,
-    return_tensors="pt"
-).to("cuda")
-
-# Generate
-print("Running zero-shot inference...")
-generated_ids = model.generate(**inputs, max_new_tokens=128)
-generated_ids_trimmed = [
-    out_ids[len(in_ids):] for in_ids, out_ids in zip(inputs.input_ids, generated_ids)
-]
-output_text = processor.batch_decode(
-    generated_ids_trimmed, skip_special_tokens=True, clean_up_tokenization_spaces=False
-)[0]
-
-print(f"\nGround Truth: {ground_truth}")
-print(f"Zero-Shot Prediction: {output_text}\n")
+for data in dataloader:
+    inputs = preprocess_batch(processor, data)
+    output_ids = model.generate(**inputs.to(device), max_new_tokens=100)
+    exit()
