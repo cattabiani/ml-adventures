@@ -33,3 +33,6 @@ wandb/
 
 # Data
 data/
+
+# Environment configurations containing secrets
+.envrc
