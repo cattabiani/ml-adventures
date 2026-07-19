@@ -25,7 +25,7 @@ Get fluent in PyTorch, modern training workflows, and Reinforcement Learning (RL
 Understand attention, embeddings, and generative models.
 
 - [x] Character-level GPT (build a transformer from scratch, train on GPU)
-- [ ] Fine-tune a small language or vision model on a custom task
+- [x] Fine-tune a small language or vision model on a custom task
 - [ ] Semantic search / retrieval system
 
 ### Phase 3: Specialization
@@ -50,3 +50,4 @@ I have 8+ years of production C++/Python, a PhD in Computational Mechanics, and 
 | 03 | Tic-Tac-Toe (DQN) | ✅ | Never loses vs random |
 | 04 | CartPole (DQN) | ✅ | 500/500 perfect |
 | 05 | Character-Level GPT | ✅ | 2.24 train / 2.27 val loss |
+| 06 | Equation-to-Code (QLoRA Qwen2-VL) | ✅ | 91.0% validation accuracy |
