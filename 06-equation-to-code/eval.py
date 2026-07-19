@@ -49,15 +49,22 @@ def main():
     else:
         print("No adapters found. Evaluating the zero-shot base model.")
     
-    # 5. Set model to eval mode and run the inference loop over the dataloader
-    # - call preprocess_batch(..., is_train=False)
-    # - generate predictions with model.generate()
-    # - decode predictions with postproc_output_ids()
-    # - calculate algebraic equivalence accuracy using compare()
-    # TODO
-    
-    # 6. Print final validation accuracy metrics
-    # TODO
+    model.eval()
+
+    correct = 0
+    n_tests = 0
+    for data in dataloader:
+        inputs = preprocess_batch(processor, data, is_train=False).to(device)
+        output_ids = model.generate(**inputs, max_new_tokens=100)
+        predictions = postproc_output_ids(processor, inputs, output_ids)
+        corr, tot = compare(predictions, data)
+        correct += corr
+        n_tests += tot
+        
+
+
+    print(f"Final evaluation (%): {100*correct/n_tests}")
+
 
 if __name__ == "__main__":
     main()
