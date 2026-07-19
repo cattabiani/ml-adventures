@@ -177,10 +177,13 @@ training_args = TrainingArguments(
     eval_strategy="epoch",
     save_strategy="epoch",
     load_best_model_at_end=True,
+    remove_unused_columns=False,
 )
 processor = AutoProcessor.from_pretrained(model_id)
 def data_collator(data):
     return preprocess_batch(processor, collate_fn(data), is_train=True)
+
+# help(TrainingArguments)
 
 trainer = Trainer(
     model=model,
