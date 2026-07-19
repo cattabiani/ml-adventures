@@ -29,7 +29,6 @@ dataset = dataset.train_test_split(test_size=0.1, seed=42)
 train_data = dataset['train']
 eval_data = dataset['test']
 
-dataloader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, shuffle=True, collate_fn=collate_fn)
 
 
 
@@ -92,3 +91,11 @@ trainer = Trainer(
 )
 
 trainer.train()
+
+
+# for data in dataloader:
+#     inputs = preprocess_batch(processor, data)
+#     output_ids = model.generate(**inputs.to(device), max_new_tokens=100)
+#     predictions = postproc_output_ids(processor, inputs, output_ids)
+#     compare(predictions, data)
+#     exit()
