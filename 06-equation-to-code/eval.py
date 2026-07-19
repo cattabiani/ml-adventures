@@ -14,77 +14,28 @@ def main():
     processed_path = Path("data/synthetic_dataset")
     dataset = load_from_disk(str(processed_path))
     
-    # Use the same split seed as training to evaluate on the correct test split
-    dataset = dataset.train_test_split(test_size=0.1, seed=42)
-    eval_data = dataset['test']
+    # 1. Split the dataset (ensure same seed=42) and get the eval/test split
+    # TODO
     
-    # Initialize processor
-    processor = AutoProcessor.from_pretrained(model_id)
+    # 2. Initialize processor and dataloader (batch_size 4 or 8 is safe)
+    # TODO
     
-    # DataLoader for evaluation
-    dataloader = torch.utils.data.DataLoader(
-        eval_data, 
-        batch_size=8, 
-        shuffle=False, 
-        collate_fn=collate_fn
-    )
+    # 3. Load base model in 4-bit (reuse the same BitsAndBytesConfig as training)
+    # TODO
     
-    # Configure 4-bit quantization (same as training to fit in VRAM)
-    quantization_config = BitsAndBytesConfig(
-        load_in_4bit=True,
-        bnb_4bit_compute_dtype=torch.float16,
-        bnb_4bit_use_double_quant=True,
-        bnb_4bit_quant_type="nf4"
-    )
+    # 4. Check if adapter checkpoints exist in "data/lora_finetuning"
+    # If they do, load the latest one onto the base model using PeftModel
+    # TODO
     
-    print("Loading base model...")
-    model = Qwen2VLForConditionalGeneration.from_pretrained(
-        model_id,
-        quantization_config=quantization_config,
-        device_map="auto"
-    )
+    # 5. Set model to eval mode and run the inference loop over the dataloader
+    # - call preprocess_batch(..., is_train=False)
+    # - generate predictions with model.generate()
+    # - decode predictions with postproc_output_ids()
+    # - calculate algebraic equivalence accuracy using compare()
+    # TODO
     
-    # Check if a trained adapter checkpoint exists
-    adapter_path = "data/lora_finetuning"
-    checkpoints = glob.glob(os.path.join(adapter_path, "checkpoint-*"))
-    if checkpoints:
-        latest_checkpoint = max(checkpoints, key=os.path.getctime)
-        print(f"Loading trained adapter from: {latest_checkpoint}")
-        model = PeftModel.from_pretrained(model, latest_checkpoint)
-    else:
-        print("No adapters found. Evaluating the zero-shot base model.")
-        
-    model.eval()
-    
-    total_correct = 0
-    total_samples = 0
-    
-    print("\nStarting evaluation...")
-    with torch.no_grad():
-        for batch in dataloader:
-            # We use is_train=False to not include the ground truth in the prompt
-            inputs = preprocess_batch(processor, batch, is_train=False)
-            
-            # Move inputs to device (and handle dtype casting if necessary)
-            inputs = {k: v.to(device) if isinstance(v, torch.Tensor) else v for k, v in inputs.items()}
-            
-            # Generate the predicted sequence
-            output_ids = model.generate(**inputs, max_new_tokens=100)
-            
-            # Post-process output IDs to extract prediction strings
-            predictions = postproc_output_ids(processor, inputs, output_ids)
-            
-            # Compare predictions with ground truth SymPy formulas
-            correct, total = compare(predictions, batch)
-            
-            total_correct += correct
-            total_samples += total
-            
-    accuracy = (total_correct / total_samples) * 100 if total_samples > 0 else 0
-    print(f"\nEvaluation Complete.")
-    print(f"Total Samples: {total_samples}")
-    print(f"Algebraically Equivalent: {total_correct}")
-    print(f"Accuracy: {accuracy:.2f}%")
+    # 6. Print final validation accuracy metrics
+    # TODO
 
 if __name__ == "__main__":
     main()
