@@ -17,9 +17,9 @@
 - Set up gradient checkpointing and memory optimization [x]
 
 ### Task 4: Training & Monitoring
-- Train the model locally on the RTX 4070 Ti [ ]
-- Log training and validation loss [ ]
+- Train the model locally on the RTX 4070 Ti [x]
+- Log training and validation loss [x]
 
 ### Task 5: Evaluation & Inference
 - Build an inference script that takes a new image and generates Python code [x]
-- Test on unseen typeset equation images and evaluate execution correctness [ ]
+- Test on unseen typeset equation images and evaluate execution correctness [x]
