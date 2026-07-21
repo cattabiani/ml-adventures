@@ -571,6 +571,48 @@ If you want to eliminate the noise of Monte Carlo integration, you can use a fix
    $$\int_{\Omega} \mathcal{U}(\mathbf{u}_{\theta}) \, d\Omega \approx \sum_{i=1}^N w_i \, \mathcal{U}(\mathbf{u}_{\theta}(\mathbf{x}_i))$$
 3. **Keep Static:** Since the coordinates are fixed, the integration weights $w_i$ do not change during training, making the loss landscape completely deterministic and easier for optimizers like L-BFGS to converge.
 
+---
+
+## 17. The Exact Computational Difference: PINN Loss vs. Deep Ritz Loss
+
+To see why they are not the same computation, look at what you compute at each point $(x_i, y_i)$ to get the final scalar loss.
+
+### 1. PINN Loss (Strong Form PDE Residuals)
+A standard PINN does **not** compute energy, virtual work, or integrals. It checks if Newton's second law (force balance) holds at each point.
+
+For each point $i$, you compute:
+1. Displacement: $\mathbf{u}_i = [u_x, u_y]^T$
+2. Strains (1st derivatives): $\boldsymbol{\varepsilon}_i = [\frac{\partial u_x}{\partial x}, \frac{\partial u_y}{\partial y}, \frac{\partial u_x}{\partial y} + \frac{\partial u_y}{\partial x}]^T$
+3. Stresses: $\boldsymbol{\sigma}_i = \mathbf{C} \boldsymbol{\varepsilon}_i$
+4. **PDE Residuals (2nd derivatives):**
+   $$R_{x, i} = \frac{\partial \sigma_{xx}}{\partial x} + \frac{\partial \sigma_{xy}}{\partial y} + f_x$$
+   $$R_{y, i} = \frac{\partial \sigma_{xy}}{\partial x} + \frac{\partial \sigma_{yy}}{\partial y} + f_y$$
+5. **The Domain Loss is the mean of squared residuals:**
+   $$\mathcal{L}_{\text{PINN\_domain}} = \frac{1}{N} \sum_{i=1}^N \left( R_{x, i}^2 + R_{y, i}^2 \right)$$
+
+*Note:* You are squaring the local force imbalances at each point and averaging them. There is no multiplication by volume/area, and no summation of energy.
+
+---
+
+### 2. Deep Ritz / DEM Loss (Potential Energy)
+Deep Ritz does **not** compute force balance or stress divergence. It computes the total potential energy of the system.
+
+For each point $i$, you compute:
+1. Displacement: $\mathbf{u}_i = [u_x, u_y]^T$
+2. Strains (1st derivatives): $\boldsymbol{\varepsilon}_i = [\frac{\partial u_x}{\partial x}, \frac{\partial u_y}{\partial y}, \frac{\partial u_x}{\partial y} + \frac{\partial u_y}{\partial x}]^T$
+3. **Strain Energy Density (No 2nd derivatives):**
+   $$\mathcal{U}_i = \frac{1}{2} \boldsymbol{\varepsilon}_i^T \mathbf{C} \boldsymbol{\varepsilon}_i$$
+4. **The Domain Loss is the approximated integral of energy:**
+   $$\mathcal{L}_{\text{Ritz\_domain}} = \text{Volume}(\Omega) \cdot \frac{1}{N} \sum_{i=1}^N \mathcal{U}_i$$
+
+---
+
+### Key Takeaways
+- **The mathematical quantities are different:** PINN minimizes force imbalance (units: $\text{N}^2/\text{m}^6$ squared force density), while Deep Ritz minimizes potential energy (units: $\text{J}$ energy).
+- **The derivative orders are different:** PINN requires second-order derivatives of displacements to get the divergence of stress ($\frac{\partial^2 u}{\partial x^2}$). Deep Ritz only requires first-order derivatives ($\frac{\partial u}{\partial x}$) to calculate strain energy density.
+- **Traction BCs:** PINN requires an explicit boundary term $\sum \|\boldsymbol{\sigma}\mathbf{n} - \mathbf{T}\|^2$. Deep Ritz naturally satisfies traction boundaries through the external work term $- \int \mathbf{u}^T \mathbf{T} \, d\Gamma$.
+
+
 
 
 
