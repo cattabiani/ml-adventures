@@ -163,3 +163,63 @@ Substituting this back into the first equation allows you to solve for the displ
 
 $$\left( K_{vv} - \frac{K_{v\theta} K_{\theta v}}{K_{\theta\theta}} \right) v = F$$
 
+---
+
+## 6. Concrete Example: Constructing $\mathbf{u}(x, y)$
+
+To go from generalized coordinates $(v_L, \theta_L)$ at the tip to the continuous 2D displacement field $\mathbf{u}(x, y) = [u_x(x, y), u_y(x, y)]^T$, we need a concrete kinematic assumption.
+
+Let's assume the neutral axis of the beam is at $y = 0$, meaning the domain is $x \in [0, L]$ and $y \in [-H/2, H/2]$.
+
+### 1. Kinematic Ansatz
+Using Timoshenko-like assumptions where deflection and rotation are independent, and assuming simple linear shapes along the length that satisfy the clamped boundary conditions $u_x(0,y) = u_y(0,y) = 0$:
+
+$$u_y(x, y) = v(x) = \frac{x}{L} v_L$$
+$$u_x(x, y) = -y \theta(x) = -y \frac{x}{L} \theta_L$$
+
+Here, $v_L$ and $\theta_L$ are the tip deflection and rotation (our 2 unknowns).
+
+### 2. Strain Vector $\boldsymbol{\varepsilon}(x, y)$
+Taking derivatives according to the plane strain definition:
+
+$$\varepsilon_{xx} = \frac{\partial u_x}{\partial x} = -y \frac{1}{L} \theta_L$$
+$$\varepsilon_{yy} = \frac{\partial u_y}{\partial y} = 0$$
+$$\gamma_{xy} = 2\varepsilon_{xy} = \frac{\partial u_x}{\partial y} + \frac{\partial u_y}{\partial x} = -\frac{x}{L} \theta_L + \frac{1}{L} v_L$$
+
+In matrix form $\boldsymbol{\varepsilon} = \mathbf{B}_v v_L + \mathbf{B}_{\theta} \theta_L$:
+
+$$\boldsymbol{\varepsilon}(x, y) = \begin{bmatrix} 0 \\ 0 \\ 1/L \end{bmatrix} v_L + \begin{bmatrix} -y/L \\ 0 \\ -x/L \end{bmatrix} \theta_L \quad \implies \quad \mathbf{B}_v = \begin{bmatrix} 0 \\ 0 \\ 1/L \end{bmatrix}, \quad \mathbf{B}_{\theta} = \begin{bmatrix} -y/L \\ 0 \\ -x/L \end{bmatrix}$$
+
+### 3. Integrating to get Stiffness Coefficients $K_{ij}$
+Using the plane strain constitutive tensor matrix components:
+
+$$\mathbf{C} = \begin{bmatrix} C_{11} & C_{12} & 0 \\ C_{12} & C_{11} & 0 \\ 0 & 0 & G \end{bmatrix}$$
+
+where $C_{11} = \frac{E(1-\nu)}{(1+\nu)(1-2\nu)}$ and $G = \frac{E}{2(1+\nu)}$ is the shear modulus.
+
+Now, integrate $K_{ij} = \int_{0}^L \int_{-H/2}^{H/2} \mathbf{B}_i^T \mathbf{C} \mathbf{B}_j \, dy \, dx$:
+
+* **For $K_{vv}$**:
+  $$\mathbf{B}_v^T \mathbf{C} \mathbf{B}_v = \frac{G}{L^2}$$
+  $$K_{vv} = \int_0^L \int_{-H/2}^{H/2} \frac{G}{L^2} \, dy \, dx = \frac{G H}{L}$$
+
+* **For $K_{v\theta}$**:
+  $$\mathbf{B}_v^T \mathbf{C} \mathbf{B}_{\theta} = -\frac{G x}{L^2}$$
+  $$K_{v\theta} = \int_0^L \int_{-H/2}^{H/2} -\frac{G x}{L^2} \, dy \, dx = -\frac{G H}{L^2} \int_0^L x \, dx = -\frac{G H}{2}$$
+
+* **For $K_{\theta\theta}$**:
+  $$\mathbf{B}_{\theta}^T \mathbf{C} \mathbf{B}_{\theta} = C_{11} \frac{y^2}{L^2} + G \frac{x^2}{L^2}$$
+  $$K_{\theta\theta} = \int_0^L \int_{-H/2}^{H/2} \left( C_{11} \frac{y^2}{L^2} + G \frac{x^2}{L^2} \right) \, dy \, dx = C_{11} \frac{H^3}{12 L} + \frac{G H L}{3}$$
+
+### 4. Direct Solution for $v_L$ and $\theta_L$
+With these coefficients, the rotation $\theta_L$ at the tip is:
+
+$$\theta_L = -\frac{K_{\theta v}}{K_{\theta\theta}} v_L = \frac{G H / 2}{C_{11} \frac{H^3}{12 L} + \frac{G H L}{3}} v_L = \frac{6 G L}{C_{11} H^2 + 4 G L^2} v_L$$
+
+Substitute this back into the force equation to get $v_L$:
+
+$$\left( \frac{G H}{L} - \frac{3 G^2 H L}{C_{11} H^2 + 4 G L^2} \right) v_L = F$$
+
+Once you solve for $v_L$ and $\theta_L$, you plug them directly back into the kinematic ansatz in step 1 to get the explicit continuous field $\mathbf{u}(x, y)$.
+
+
