@@ -1,5 +1,4 @@
 import os
-import json
 import numpy as np
 from mpi4py import MPI
 import dolfinx
@@ -9,25 +8,18 @@ from dolfinx.fem.petsc import LinearProblem
 import ufl
 import gmsh
 
-# 1. Load Shared Parameters
-current_dir = os.path.dirname(os.path.abspath(__file__))
-params_path = os.path.join(current_dir, "..", "cantilever_parameters.json")
-
-with open(params_path, "r") as f:
-    params = json.load(f)
-
-# Material parameters
-E = params["material"]["E"]
-nu = params["material"]["nu"]
+# 1. Define Material and Boundary Parameters
+E = 1000.0
+nu = 0.3
 mu = E / (2.0 * (1.0 + nu))
 lambda_ = E * nu / ((1.0 + nu) * (1.0 - 2.0 * nu))
 
-# Boundary condition parameters
-clamped_name = params["boundary_conditions"]["clamped_group"]
-traction_name = params["boundary_conditions"]["traction_group"]
-traction_force = params["boundary_conditions"]["traction_force"]
+clamped_name = "clamped"
+traction_name = "traction"
+traction_force = [0.0, -1.0]
 
 # 2. Load Geometry and Generate Mesh using Gmsh
+current_dir = os.path.dirname(os.path.abspath(__file__))
 geo_path = os.path.join(current_dir, "..", "cantilever.geo")
 
 gmsh.initialize()
