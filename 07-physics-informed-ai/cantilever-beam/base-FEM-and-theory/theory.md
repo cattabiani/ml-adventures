@@ -6,96 +6,79 @@ This document outlines the governing equations and boundary conditions for a 2D 
 
 ## Governing Equations
 
-We consider a 2D elastic body in the x-y plane. Under the **plane strain** assumption, the out-of-plane strain components are zero because the thickness in the z-direction is assumed to be very large and constrained:
+We consider a 2D elastic body in the x-y plane. Under the **plane strain** assumption, the out-of-plane strain components are zero:
 
-* ε<sub>zz</sub> = 0
-* ε<sub>xz</sub> = 0
-* ε<sub>yz</sub> = 0
+* $\varepsilon_{zz} = 0$
+* $\varepsilon_{xz} = 0$
+* $\varepsilon_{yz} = 0$
+
+The thickness in the z-direction is assumed to be very large (infinitely thick) and constrained.
 
 ### 1. Strain-Displacement Relationship
-The in-plane strain tensor **ε** is defined in terms of the displacement vector **u** = (u<sub>x</sub>, u<sub>y</sub>) as:
+The in-plane strain tensor $\varepsilon$ is defined in terms of the displacement vector $\mathbf{u} = (u_x, u_y)$ as:
 
-* **ε**(**u**) = 0.5 * (∇**u** + ∇**u**<sup>T</sup>)
+$$\varepsilon(\mathbf{u}) = \frac{1}{2}(\nabla\mathbf{u} + (\nabla\mathbf{u})^T)$$
 
 In component form:
 
-```
-               ∂u_x
-  ε_xx   =  --------
-               ∂x
+$$\varepsilon_{xx} = \frac{\partial u_x}{\partial x}$$
 
-               ∂u_y
-  ε_yy   =  --------
-               ∂y
+$$\varepsilon_{yy} = \frac{\partial u_y}{\partial y}$$
 
-             1   /  ∂u_x      ∂u_y  \
-  ε_xy   =  --- | ------  +  ------ |
-             2   \  ∂y        ∂x    /
-```
+$$\varepsilon_{xy} = \frac{1}{2}\left(\frac{\partial u_x}{\partial y} + \frac{\partial u_y}{\partial x}\right)$$
 
 ### 2. Constitutive Equations (Hooke's Law)
-For an isotropic elastic material under plane strain, the stress tensor **σ** is related to the strain tensor **ε** by:
+For an isotropic elastic material under plane strain, the stress tensor $\sigma$ is related to the strain tensor $\varepsilon$ by:
 
-* **σ**(**u**) = λ * div(**u**) * **I** + 2 * μ * **ε**(**u**)
+$$\sigma(\mathbf{u}) = \lambda \text{div}(\mathbf{u})\mathbf{I} + 2\mu\varepsilon(\mathbf{u})$$
 
 where:
-* **I** is the 2D identity tensor.
-* div(**u**) = ε<sub>xx</sub> + ε<sub>yy</sub> is the divergence of displacement (volume change).
-* λ (lambda) and μ (mu) are the Lame constants.
+* $\mathbf{I}$ is the 2D identity tensor.
+* $\text{div}(\mathbf{u}) = \frac{\partial u_x}{\partial x} + \frac{\partial u_y}{\partial y}$ is the divergence of displacement.
+* $\lambda$ and $\mu$ are the Lame constants.
 
-The Lame constants are computed from Young's Modulus (E) and Poisson's ratio (ν):
+The Lame constants are computed from Young's Modulus ($E$) and Poisson's ratio ($\nu$):
 
-```
-                 E
-  μ     =  -------------
-             2 * (1 + ν)
+$$\mu = \frac{E}{2(1 + \nu)}$$
 
-                 E * ν
-  λ     =  -----------------------
-             (1 + ν) * (1 - 2 * ν)
-```
+$$\lambda = \frac{E\nu}{(1 + \nu)(1 - 2\nu)}$$
 
 Under these conditions, the out-of-plane normal stress is non-zero:
-* σ<sub>zz</sub> = ν * (σ<sub>xx</sub> + σ<sub>yy</sub>)
+
+$$\sigma_{zz} = \nu(\sigma_{xx} + \sigma_{yy})$$
 
 ### 3. Equilibrium Equation
-In the absence of body forces, the momentum balance/equilibrium equation is:
+In the absence of body forces, the equilibrium equation is:
 
-* div(**σ**(**u**)) = **0**
+$$\text{div}(\sigma(\mathbf{u})) = \mathbf{0}$$
 
-which in components translates to:
+which in component form is:
 
-```
-   ∂σ_xx      ∂σ_xy
-  -------  + -------  =  0
-    ∂x         ∂y
+$$\frac{\partial \sigma_{xx}}{\partial x} + \frac{\partial \sigma_{xy}}{\partial y} = 0$$
 
-   ∂σ_yx      ∂σ_yy
-  -------  + -------  =  0
-    ∂x         ∂y
-```
+$$\frac{\partial \sigma_{yx}}{\partial x} + \frac{\partial \sigma_{yy}}{\partial y} = 0$$
 
 ---
 
 ## Boundary Conditions
 
-The domain is a rectangular beam of length L and height H:
-* Domain Ω = [0, L] x [0, H]
+We model a rectangular domain of length $L$ and height $H$:
+* Domain $\Omega = [0, L] \times [0, H]$
 
-### 1. Clamped Boundary (Left Edge at x = 0)
-The displacement is completely fixed:
-* u<sub>x</sub>(0, y) = 0
-* u<sub>y</sub>(0, y) = 0
+### 1. Clamped Boundary (Left Edge at $x = 0$)
+The displacement is completely constrained:
+* $u_x(0, y) = 0$
+* $u_y(0, y) = 0$
 
-### 2. Traction Boundary (Right Edge at x = L)
-A downward vertical shear load is applied to the tip. The traction vector **T** is:
-* **T** = (0, -F<sub>y</sub>)
-where F<sub>y</sub> is the force per unit area.
+### 2. Traction Boundary (Right Edge at $x = L$)
+A downward vertical shear load is applied to the tip. The traction vector $\mathbf{T}$ is:
+* $\mathbf{T} = (0, -F_y)$
+where $F_y$ is the force per unit area.
 
 This boundary condition is:
-* **σ** * **n** = **T**  at x = L
-where **n** = (1, 0) is the outward normal vector.
+* $\sigma \mathbf{n} = \mathbf{T}$  at $x = L$
+where $\mathbf{n} = (1, 0)$ is the outward normal vector.
 
-### 3. Free Boundaries (Top at y = H and Bottom at y = 0)
+### 3. Free Boundaries (Top at $y = H$ and Bottom at $y = 0$)
 No external forces are applied to the top or bottom surfaces:
-* **σ** * **n** = **0**
+* $\sigma \mathbf{n} = \mathbf{0}$
