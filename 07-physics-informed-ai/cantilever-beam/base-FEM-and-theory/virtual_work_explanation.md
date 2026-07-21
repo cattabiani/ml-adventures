@@ -778,6 +778,38 @@ $$\Pi = \frac{1}{2} E_{\text{external}} - E_{\text{external}} = -\frac{1}{2} E_{
 
 which is negative.
 
+---
+
+## 23. Why Can't We Use $\left( E_{\text{strain}} - \frac{1}{2} E_{\text{external}} \right)^2$ as the Loss?
+
+It is highly tempting to say: *"Since $E_{\text{strain}} = \frac{1}{2} E_{\text{external}}$ at equilibrium, why don't we just square the difference and drive it to zero as our loss?"*
+
+$$\mathcal{L}_{\text{incorrect}}(\theta) = \left( E_{\text{strain}} - \frac{1}{2} E_{\text{external}} \right)^2$$
+
+This does not work. Minimizing this squared quantity results in a **non-physical solution** due to the existence of infinite false minima.
+
+### 1. The Local vs. Global Information Loss
+- **The True Potential Energy $\Pi = E_{\text{strain}} - E_{\text{external}}$:**
+  When you minimize $\Pi(\mathbf{u})$, you are finding a stationary point where the first variation is zero for **every possible virtual displacement variation $\delta \mathbf{u}$**:
+  $$\delta \Pi = \delta E_{\text{strain}} - \delta E_{\text{external}} = 0 \quad \forall \delta \mathbf{u}$$
+  This derivative requirement forces the local differential equations of force equilibrium to be satisfied at *every single coordinate* in the domain.
+- **The Squared Energy Balance $\mathcal{L}_{\text{incorrect}} = \left( E_{\text{strain}} - \frac{1}{2} E_{\text{external}} \right)^2$:**
+  Let's take the variation (derivative) of this loss function:
+  $$\delta \mathcal{L}_{\text{incorrect}} = 2 \left( E_{\text{strain}} - \frac{1}{2} E_{\text{external}} \right) \cdot \left( \delta E_{\text{strain}} - \frac{1}{2} \delta E_{\text{external}} \right)$$
+  Notice that $\delta \mathcal{L} = 0$ is satisfied **any time** $E_{\text{strain}} = \frac{1}{2} E_{\text{external}}$, regardless of what the variation $\left( \delta E_{\text{strain}} - \frac{1}{2} \delta E_{\text{external}} \right)$ is. 
+
+### 2. Infinite False Global Minima
+There are infinitely many completely wrong, non-physical displacement fields that happen to satisfy the single scalar ratio $E_{\text{strain}} = \frac{1}{2} E_{\text{external}}$.
+
+For example, take a completely random, garbage displacement field $\mathbf{u}_{\text{garbage}}(x, y)$ that violates all force balance equations. If you scale this garbage field by a constant factor $\alpha$:
+$$\mathbf{u} = \alpha \mathbf{u}_{\text{garbage}}$$
+Since strain energy is quadratic in displacement ($E_{\text{strain}} \propto \alpha^2$) and external work is linear ($E_{\text{external}} \propto \alpha$), you can always solve for a scaling factor $\alpha$:
+$$\alpha^2 E_{\text{strain\_garbage}} = \frac{1}{2} \alpha E_{\text{external\_garbage}} \implies \alpha = \frac{E_{\text{external\_garbage}}}{2 E_{\text{strain\_garbage}}}$$
+This scaled garbage field will yield a loss of **exactly zero**. 
+
+If you train a neural network with this squared loss, the optimizer will quickly find one of these infinite scaled garbage fields that satisfies the scalar ratio, instead of solving the actual physical boundary value problem.
+
+
 
 
 
