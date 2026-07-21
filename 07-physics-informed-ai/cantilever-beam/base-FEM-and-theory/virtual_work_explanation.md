@@ -513,6 +513,41 @@ Here are the main reasons why this approach is considered crude, along with the 
 ### Summary
 PINNs and Deep Ritz are not meant to compete with FEM for standard forward simulations. They are essentially a brute-force optimization approach to solving differential equations. Their main value is in **unifying data and physics** (solving inverse problems where FEM fails) and building **real-time parametric surrogates** where the upfront training cost is offset by instant evaluation later.
 
+---
+
+## 15. PINN (Strong Form) vs. Deep Ritz (Weak Form)
+
+To see the difference in how they work, compare what each method asks the neural network to compute.
+
+### 1. Standard PINN (Strong Form)
+A standard PINN solves the strong-form PDEs directly. 
+- **The Equation:** For 2D elasticity, it must satisfy:
+  $$\frac{\partial \sigma_{xx}}{\partial x} + \frac{\partial \sigma_{xy}}{\partial y} = 0, \quad \frac{\partial \sigma_{xy}}{\partial x} + \frac{\partial \sigma_{yy}}{\partial y} = 0$$
+- **Derivative Requirement:** Since stress $\boldsymbol{\sigma}$ is already a first derivative of displacement $\mathbf{u}$ (strain), computing the divergence of stress requires **second-order spatial derivatives** of the displacement field:
+  $$\frac{\partial^2 u_x}{\partial x^2}, \quad \frac{\partial^2 u_y}{\partial y^2}, \quad \frac{\partial^2 u_x}{\partial y^2}, \text{ etc.}$$
+- **Traction BCs:** You must manually enforce traction boundary conditions (like the force at the tip) by adding another penalty term to the loss:
+  $$\mathcal{L}_{\text{traction}} = \beta_{\text{trac}} \sum \|\boldsymbol{\sigma}\mathbf{n} - \mathbf{T}\|^2$$
+
+### 2. Deep Ritz / Deep Energy Method (Weak Form)
+Instead of enforcing the differential equations point-by-point, Deep Ritz minimizes the total potential energy of the system.
+- **The Equation:** It minimizes:
+  $$\Pi(\mathbf{u}) = \int_{\Omega} \left( \frac{1}{2} \boldsymbol{\varepsilon}(\mathbf{u})^T \mathbf{C} \boldsymbol{\varepsilon}(\mathbf{u}) \right) d\Omega - \int_{\Gamma_t} \mathbf{u}^T \mathbf{T} \, d\Gamma$$
+- **Derivative Requirement:** Because the energy depends only on strain $\boldsymbol{\varepsilon}$, you only need **first-order spatial derivatives** of the displacement field:
+  $$\frac{\partial u_x}{\partial x}, \quad \frac{\partial u_y}{\partial y}, \quad \frac{\partial u_x}{\partial y}, \quad \frac{\partial u_y}{\partial x}$$
+- **Traction BCs:** You do not need to add a penalty term for traction boundary conditions. The work done by the force $- \int_{\Gamma_t} \mathbf{u}^T \mathbf{T} \, d\Gamma$ is **naturally built into the energy functional**. The optimizer satisfies this boundary condition automatically as it minimizes the total energy.
+
+### Comparison Table
+
+| Feature | PINN (Strong Form) | Deep Ritz (Weak Form) |
+| :--- | :--- | :--- |
+| **Physical Principle** | Equilibrium of forces (PDE) | Minimum Potential Energy (PVW) |
+| **Max Derivative Order**| 2nd order ($\frac{\partial^2 u}{\partial x^2}$) | 1st order ($\frac{\partial u}{\partial x}$) |
+| **Computational Cost** | High (double autograd graph) | Lower (single autograd graph) |
+| **Traction Boundary (Force)** | Soft penalty in loss | Integrated naturally in the energy |
+| **Dirichlet Boundary (Wall)** | Soft penalty in loss | Soft penalty in loss |
+| **Loss Landscape** | Stiffer, harder to optimize | Smoother, faster convergence |
+
+
 
 
 
