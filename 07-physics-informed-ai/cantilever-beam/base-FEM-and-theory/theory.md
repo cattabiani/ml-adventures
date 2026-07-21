@@ -73,7 +73,7 @@ The displacement is completely constrained:
 ### 2. Traction Boundary (Right Edge at $x = L$)
 A downward vertical shear load is applied to the tip. The traction vector $\mathbf{T}$ is:
 * $\mathbf{T} = (0, -F_y)$
-where $F_y$ is the force per unit area.
+where $F_y$ is the force per unit length.
 
 This boundary condition is:
 * $\sigma \mathbf{n} = \mathbf{T}$  at $x = L$
