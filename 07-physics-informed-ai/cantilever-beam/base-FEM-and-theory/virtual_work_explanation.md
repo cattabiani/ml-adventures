@@ -433,6 +433,60 @@ du_dx = torch.autograd.grad(
 
 No mesh is needed because PyTorch is not doing finite differences (like $(u(x+\Delta x) - u(x))/\Delta x$). It is evaluating the exact analytical derivative of the network's layers at that specific coordinate.
 
+---
+
+## 13. The Deep Ritz Training Loop Step-by-Step
+
+Yes, exactly: the neural network **is** the unknown field $\mathbf{u}(x, y)$. 
+
+To find the correct weights $\theta$ (the float parameters of the network), we sample a bunch of coordinate points inside the beam and on the boundary, evaluate the energy at those points, and minimize the energy using gradient descent. 
+
+Here is the exact step-by-step loop of what we do:
+
+### Step 1: Initialize the Network
+You start with a neural network `model` with random weights $\theta$. If you feed in a coordinate like `[0.5, 0.2]`, it will output random garbage like `[-142.3, 89.1]`.
+
+### Step 2: Sample Points (No Mesh)
+Generate two batches of random coordinate floats (often using Latin Hypercube Sampling to distribute them evenly):
+1. `X_domain`: $N_d$ points inside the beam (e.g., $x \in [0, L], y \in [-H/2, H/2]$).
+2. `X_boundary`: $N_b$ points on the right edge where the force $F$ is applied ($x = L, y \in [-H/2, H/2]$).
+
+### Step 3: Compute the Strain Energy (Internal Work)
+Pass the domain coordinates `X_domain` through the network:
+1. Get the displacements: $\mathbf{u} = \text{model}(\mathbf{x}_i)$.
+2. Use PyTorch Autograd to compute the strain components at each point:
+   $$\varepsilon_{xx} = \frac{\partial u_x}{\partial x}, \quad \varepsilon_{yy} = \frac{\partial u_y}{\partial y}, \quad \gamma_{xy} = \frac{\partial u_x}{\partial y} + \frac{\partial u_y}{\partial x}$$
+3. Compute the strain energy density at each sampled point:
+   $$U_i = \frac{1}{2} \boldsymbol{\varepsilon}_i^T \mathbf{C} \boldsymbol{\varepsilon}_i$$
+4. Compute the total strain energy of the beam by taking the average over all points and multiplying by the total volume (area in 2D) $\Omega$:
+   $$E_{\text{strain}} \approx \text{Volume}(\Omega) \cdot \frac{1}{N_d} \sum_{i=1}^{N_d} U_i$$
+
+### Step 4: Compute the External Work
+Pass the boundary coordinates `X_boundary` through the network:
+1. Get the boundary displacements: $\mathbf{u}_j = \text{model}(\mathbf{x}_j)$.
+2. Compute the work done by the traction force $\mathbf{T} = [0, -F_y]^T$ at each boundary point:
+   $$W_j = u_y(L, y_j) \cdot (-F_y)$$
+3. Compute the total external work by averaging and multiplying by the boundary area (height in 2D) $\Gamma_t$:
+   $$E_{\text{external}} \approx \text{Height}(H) \cdot \frac{1}{N_b} \sum_{j=1}^{N_b} W_j$$
+
+### Step 5: Compute the Total Energy (The Loss)
+The loss function is the total potential energy of the system:
+
+$$\text{Loss}(\theta) = E_{\text{strain}} - E_{\text{external}}$$
+
+*(If you have essential boundary conditions like the clamped end at $x=0$, you also add a penalty term like $\beta \sum \| \mathbf{u}(0, y) \|^2$ to the loss to force the network to output zero displacement at the wall).*
+
+### Step 6: Backpropagate and Update
+1. Call `loss.backward()` to compute the gradients of the energy with respect to the network weights: $\nabla_{\theta} \text{Loss}$.
+2. Run an optimizer step (e.g., Adam):
+   $$\theta \leftarrow \theta - \eta \nabla_{\theta} \text{Loss}$$
+
+### Step 7: Iterate
+Repeat steps 2–6 for thousands of epochs. At each epoch, you can optionally sample **new** random points. 
+
+According to the **Principle of Minimum Potential Energy**, the displacement field that minimizes this energy loss function is the exact, true physical equilibrium solution. As the optimizer minimizes the loss, the neural network converges to the correct physical displacement field $\mathbf{u}(x, y)$.
+
+
 
 
 
