@@ -692,6 +692,55 @@ In Deep Ritz, you do not need to construct a test space or a set of orthonormal 
 
 By running backpropagation and driving the gradient of the energy loss with respect to all weights to zero ($\nabla_{\theta} \text{Loss} = 0$), you are forcing the virtual work to vanish for all virtual fields spanned by the network's parameters.
 
+---
+
+## 21. The Potential Energy Loss: A Global Scalar (And Why You Do NOT Square It)
+
+Your understanding of the global nature of the loss is completely correct, but there is one critical warning: **you must never square the energy loss!**
+
+Here is why:
+
+### 1. Yes, the Loss is a Single Global Scalar
+In a standard PINN, the loss is the average of many small punctual errors:
+
+$$\mathcal{L}_{\text{PINN}} = \frac{1}{N} \sum_{i=1}^N (\text{Residual}_i)^2$$
+
+In Deep Ritz, the loss is the **total potential energy of the entire physical system**, computed by integrating over the whole domain:
+
+$$\text{Loss}(\theta) = E_{\text{strain}} - E_{\text{external}}$$
+
+You are correct: you are not checking balance at each point individually. Instead, you are looking at the global discrepancy between the internal strain energy and the external work done by the loads. The neural network adjusts its weights to find the state of minimum global energy.
+
+---
+
+### 2. CRITICAL: Why You Do NOT Square the Loss
+In traditional deep learning, we always square the residuals (like Mean Squared Error) because the target value of the loss is $0$.
+
+If you square the potential energy:
+
+$$\text{Loss}_{\text{incorrect}}(\theta) = \left( E_{\text{strain}} - E_{\text{external}} \right)^2$$
+
+the optimizer will try to drive this loss to $0$, meaning it will look for a state where:
+
+$$E_{\text{strain}} = E_{\text{external}}$$
+
+However, in linear elasticity, **Clapeyron's Theorem** states that at physical equilibrium:
+
+$$E_{\text{strain}} = \frac{1}{2} E_{\text{external}}$$
+
+This is because as the load is applied, some work is stored as strain energy ($50\%$), and the other $50\%$ is lost to the system's potential. 
+
+Therefore, the true minimum of the potential energy is **negative**:
+
+$$\Pi(\mathbf{u}_{\text{equilibrium}}) = \frac{1}{2} E_{\text{external}} - E_{\text{external}} = -\frac{1}{2} E_{\text{external}} < 0$$
+
+If you square the energy functional, you are forcing the system to satisfy $E_{\text{strain}} = E_{\text{external}}$, which results in a completely wrong, non-physical displacement field. You must minimize the potential energy directly as a raw, signed value:
+
+$$\text{Loss}(\theta) = E_{\text{strain}} - E_{\text{external}}$$
+
+The optimizer will drive the energy to its lowest possible negative value, which corresponds exactly to the physical equilibrium state.
+
+
 
 
 
