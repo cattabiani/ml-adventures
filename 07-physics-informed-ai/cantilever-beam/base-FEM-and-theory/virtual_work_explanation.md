@@ -249,5 +249,38 @@ In your 2-degree-of-freedom case ($N = 2$):
 
 By testing the virtual work with the first shape function (setting $\delta v \neq 0$, $\delta \theta = 0$), you get the first equation. By testing with the second shape function (setting $\delta v = 0$, $\delta \theta \neq 0$), you get the second. This is the exact projection/orthogonality principle used in Galerkin finite elements.
 
+---
+
+## 8. Transition from Global Galerkin to FEM
+
+When transitioning from a global Ritz/Galerkin method to the Finite Element Method (FEM), the mathematical framework of virtual work remains exactly the same, but the **equations change structurally** in three major ways:
+
+### 1. Shape Functions: Global to Local (Piecewise)
+- **Global Galerkin:** The shape functions $\boldsymbol{\Phi}_j(x, y)$ are defined globally over the entire beam (e.g., polynomials like $x/L$).
+- **FEM:** The domain is subdivided into elements $\Omega_e$. The shape functions $N_i(x, y)$ are local piecewise polynomials (typically Lagrange polynomials). The function $N_i(x, y)$ is only non-zero within the elements immediately connected to node $i$ (its local support).
+
+### 2. Integration: Element-Level Assembly
+Because the shape functions are local, the integrals for the stiffness matrix $K_{ij}$ are computed element-by-element and then summed up (assembled):
+
+$$K_{ij} = \sum_{e} K_{ij}^e = \sum_{e} \int_{\Omega_e} \mathbf{B}_i^T \mathbf{C} \mathbf{B}_j \, d\Omega_e$$
+
+If node $i$ and node $j$ do not share a common element, their shape functions do not overlap, meaning:
+
+$$\mathbf{B}_i^T \mathbf{C} \mathbf{B}_j = 0 \implies K_{ij} = 0$$
+
+As a result, the global stiffness matrix $\mathbf{K}$ changes from a dense $2 \times 2$ matrix to a **large, sparse, and banded matrix**.
+
+### 3. Degrees of Freedom (DOFs)
+Instead of 2 global parameters ($v_L, \theta_L$), the unknowns are now the values at each mesh node:
+- In a 2D continuum formulation (like your plane strain model in Gmsh/DOLFINx), each node $a$ has displacement unknowns $\mathbf{u}^a = [u_x^a, u_y^a]^T$.
+- In a discretized beam element formulation, each node $a$ has deflection and rotation unknowns $[w^a, \theta^a]^T$.
+
+If you have $M$ nodes and $d$ degrees of freedom per node, the size of your system becomes $(M \times d) \times (M \times d)$:
+
+$$\mathbf{K} \mathbf{U} = \mathbf{F}$$
+
+where $\mathbf{U} = [U_1, U_2, \dots, U_{M \times d}]^T$ contains all nodal displacements.
+
+
 
 
