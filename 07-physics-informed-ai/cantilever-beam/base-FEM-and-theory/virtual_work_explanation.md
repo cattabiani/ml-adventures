@@ -547,6 +547,31 @@ Instead of enforcing the differential equations point-by-point, Deep Ritz minimi
 | **Dirichlet Boundary (Wall)** | Soft penalty in loss | Soft penalty in loss |
 | **Loss Landscape** | Stiffer, harder to optimize | Smoother, faster convergence |
 
+---
+
+## 16. How Deep Ritz Integrates the Bilinear Form
+
+Yes, it is still a numerical approximation. To evaluate the domain integral of the strain energy density (the bilinear form):
+
+$$\int_{\Omega} \left( \frac{1}{2} \boldsymbol{\varepsilon}(\mathbf{u}_{\theta})^T \mathbf{C} \boldsymbol{\varepsilon}(\mathbf{u}_{\theta}) \right) d\Omega$$
+
+Deep Ritz does not integrate analytically. Instead, it uses one of two numerical integration methods:
+
+### Method A: Monte Carlo (or quasi-Monte Carlo) Integration
+This is the standard mesh-free approach:
+1. **Sample points:** You generate a set of $N$ randomly distributed coordinates $\{\mathbf{x}_i\}_{i=1}^N$ in the domain $\Omega$ (using uniform random distribution, Latin Hypercube Sampling, or low-discrepancy Sobol sequences to cover the space evenly).
+2. **Evaluate and Sum:** You compute the strain energy density at each coordinate and multiply the average by the total area/volume of the domain:
+   $$\int_{\Omega} \mathcal{U}(\mathbf{u}_{\theta}) \, d\Omega \approx \text{Area}(\Omega) \cdot \frac{1}{N} \sum_{i=1}^N \mathcal{U}(\mathbf{u}_{\theta}(\mathbf{x}_i))$$
+3. **Resampling:** In practice, we generate **new random points at every epoch**. This means the network sees a slightly different sample of coordinates each iteration. The optimizer minimizes the expected potential energy over the entire probability space of the domain, which acts as a powerful regularizer preventing overfitting.
+
+### Method B: Fixed Background Quadrature Grid
+If you want to eliminate the noise of Monte Carlo integration, you can use a fixed grid of integration points:
+1. **Define Grid:** Predefine a static grid of coordinates $\{\mathbf{x}_i\}_{i=1}^N$ inside the domain $\Omega$ along with their respective integration weights $w_i$. Note that this grid has **no mesh connectivity**—it is just a list of independent point coordinates and floats.
+2. **Evaluate:**
+   $$\int_{\Omega} \mathcal{U}(\mathbf{u}_{\theta}) \, d\Omega \approx \sum_{i=1}^N w_i \, \mathcal{U}(\mathbf{u}_{\theta}(\mathbf{x}_i))$$
+3. **Keep Static:** Since the coordinates are fixed, the integration weights $w_i$ do not change during training, making the loss landscape completely deterministic and easier for optimizers like L-BFGS to converge.
+
+
 
 
 
