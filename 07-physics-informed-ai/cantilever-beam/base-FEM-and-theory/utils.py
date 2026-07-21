@@ -70,6 +70,16 @@ def load_gmsh_cantilever(geo_path: Path, comm=MPI.COMM_SELF):
     mesh_data = dgmsh.model_to_mesh(gmsh.model, comm, rank=0, gdim=2)
     gmsh.finalize()
     
+    # Print summary of the loaded setup
+    print("Mesh loaded successfully!")
+    print(f"Topology dimension: {mesh_data.mesh.topology.dim}")
+    print(f"Geometry dimension: {mesh_data.mesh.geometry.dim}")
+    print(f"Physical groups available: {list(mesh_data.physical_groups.keys())}")
+    print(f"Material Constants: E = {params.get('E')}, nu = {params.get('nu')}")
+    print(f"Lame parameters: mu = {params.get('mu'):.3f}, lambda = {params.get('lambda'):.3f}")
+    print(f"Dirichlet BCs parsed: {dirichlet_bcs}")
+    print(f"Neumann loads parsed: {neumann_loads}")
+
     return (
         mesh_data.mesh,
         mesh_data.cell_tags,

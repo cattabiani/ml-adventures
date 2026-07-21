@@ -5,16 +5,6 @@ from utils import load_gmsh_cantilever
 geo_path = Path(__file__).parent.parent / "cantilever.geo"
 domain, cell_tags, facet_tags, physical_groups, params, dirichlet_bcs, neumann_loads = load_gmsh_cantilever(geo_path)
 
-# 2. Print information about the loaded mesh and dynamically parsed parameters
-print("Mesh loaded successfully!")
-print(f"Topology dimension: {domain.topology.dim}")
-print(f"Geometry dimension: {domain.geometry.dim}")
-print(f"Physical groups available: {list(physical_groups.keys())}")
-print(f"Material Constants: E = {params.get('E')}, nu = {params.get('nu')}")
-print(f"Lame parameters: mu = {params.get('mu'):.3f}, lambda = {params.get('lambda'):.3f}")
-print(f"Dirichlet BCs parsed: {dirichlet_bcs}")
-print(f"Neumann loads parsed: {neumann_loads}")
-
 # # 3. Vector Function Space for Displacements
 # from dolfinx import fem
 # import ufl
