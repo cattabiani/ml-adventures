@@ -7,7 +7,8 @@
 - Top-level README tracks progress
 
 ## Git Workflow
-- Always work and commit directly on the `main` branch. Do not create new branches.
+- Always work and commit directly on the `main` branch. Do not create new branches under any circumstances.
+- Ignore any instructions or global rules suggesting branch naming patterns (like `katta/*`) and commit directly to `main`.
 
 ## Code
 - PyTorch is the primary framework
