@@ -279,7 +279,11 @@ If you have $M$ nodes and $d$ degrees of freedom per node, the size of your syst
 
 $$\mathbf{K} \mathbf{U} = \mathbf{F}$$
 
-where $\mathbf{U} = [U_1, U_2, \dots, U_{M \times d}]^T$ contains all nodal displacements.
+where:
+- $\mathbf{U} = [U_1, U_2, \dots, U_{M \times d}]^T$ contains all nodal displacements.
+- $\mathbf{K}$ is the assembled stiffness matrix representing the discretized **bilinear form** $a(u, v)$ (internal virtual work).
+- $\mathbf{F}$ is the assembled load vector representing the discretized **linear form** $L(v)$ (external virtual work).
+
 
 ---
 
