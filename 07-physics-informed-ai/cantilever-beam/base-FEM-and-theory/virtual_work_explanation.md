@@ -326,6 +326,37 @@ $$\mathcal{L}_{\text{energy}}(\theta) = \Pi(\mathbf{u}_{\theta}) = \int_{\Omega}
 - The integrals are evaluated using Monte Carlo integration or quadrature points.
 - By minimizing $\mathcal{L}_{\text{energy}}(\theta)$, the network naturally converges to the equilibrium solution (where the first variation/virtual work is zero).
 
+---
+
+## 10. Why use Deep Ritz (DEM) over a Standard FEM Solver?
+
+For a standard, linear elastic forward problem (like a 2D linear elastic cantilever beam), **FEM is vastly superior**. It is orders of magnitude faster, mathematically guaranteed to converge, and resolves stress concentrations with precise local refinement. 
+
+However, the Deep Ritz Method / Deep Energy Method (DEM) and PINNs become highly advantageous in more complex engineering scenarios:
+
+### 1. Parametric Solutions (Real-Time Surrogates)
+In FEM, if you change a design parameter (e.g., beam length $L$, height $H$, Young's modulus $E$, or the load magnitude $F$), you must rebuild the mesh, reassemble the equations, and resolve the system from scratch.
+
+With Deep Ritz, you can pass these parameters as **extra inputs to the neural network**:
+
+$$\mathbf{u}_{\theta}(x, y, L, H, E, F)$$
+
+You train the network by sampling points in both space $(x,y)$ and parameter space $(L, H, E, F)$. Once trained, the network acts as a **real-time surrogate**. You can evaluate the deformation for *any* combination of geometry and load in microseconds without running new simulations.
+
+### 2. Mesh-Free and Multi-Scale Problems
+For complex 3D geometries, generating a high-quality conformal mesh can consume up to 80% of the engineering workflow time. 
+- DEM is **mesh-free**: it only requires sampling points in the domain.
+- It also handles sharp gradients and multi-scale structures better than FEM, as neural networks are universal function approximators and do not suffer from the same polynomial element locking issues (e.g., shear locking in thin structures) when set up correctly.
+
+### 3. Solving Inverse Problems (Parameter Identification)
+If you have experimental displacement data (e.g., from Digital Image Correlation) and want to find the unknown spatial distribution of material properties $E(x,y)$:
+- **In FEM:** You must solve a nested, expensive optimization loop (updating $E(x,y)$, solving the full FEM system, calculating gradients via adjoints, and repeating).
+- **In DEM/PINNs:** You simply add a data loss term $\|\mathbf{u}_{\theta} - \mathbf{u}_{\text{data}}\|^2$ to the loss function and treat $E(x,y)$ (which can also be parameterized by a network) as learnable weights. The physics equations and the material property identification are solved simultaneously in a single optimization loop.
+
+### 4. High-Dimensional Problems
+In traditional FEM, the computational cost grows exponentially with the number of dimensions (curse of dimensionality). For stochastic/probabilistic mechanics or high-dimensional parameter spaces, the mesh-free, sample-based optimization of Deep Ritz scales much better.
+
+
 
 
 
