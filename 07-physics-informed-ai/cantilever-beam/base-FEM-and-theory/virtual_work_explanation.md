@@ -378,9 +378,61 @@ To understand why PINNs and the Deep Ritz Method are mesh-free, consider how FEM
   To solve the equations, you must integrate the bilinear and linear forms over the domain $\Omega$. Because the shape functions are local piecewise functions, you must integrate element-by-element using Gauss quadrature (sampling points at specific mathematical locations inside each element).
 - **In PINNs / Deep Ritz (Mesh-free):**
   - **For PINNs (Strong Form):** There are no integrals. You evaluate the strong-form PDE residual at a set of randomly sampled "collocation points" $\{ (x_i, y_i) \}_{i=1}^N$ distributed inside the domain (using simple random sampling or Latin Hypercube sampling). You just minimize the sum of square residuals at these discrete points.
-  - **For Deep Ritz (Weak Form / Energy):** You do have to compute the integral of the energy density $\int_{\Omega} \mathcal{U}(\mathbf{u}_{\theta}) \, d\Omega$. However, instead of integrating over elements, you use **Monte Carlo Integration** (or quasi-Monte Carlo). You sample random points $\{ (x_i, y_i) \}_{i=1}^N$ in the domain and approximate the integral as:
+- **For Deep Ritz (Weak Form / Energy):** You do have to compute the integral of the energy density $\int_{\Omega} \mathcal{U}(\mathbf{u}_{\theta}) \, d\Omega$. However, instead of integrating over elements, you use **Monte Carlo Integration** (or quasi-Monte Carlo). You sample random points $\{ (x_i, y_i) \}_{i=1}^N$ in the domain and approximate the integral as:
     $$\int_{\Omega} g(x,y) \, d\Omega \approx \frac{\text{Volume}(\Omega)}{N} \sum_{i=1}^N g(x_i, y_i)$$
     The accuracy of this integration scales with the number of random samples $N$, completely bypassing the need for structured element integration.
+
+---
+
+## 12. Connecting the "Vector of Floats" NN Model to Continuous Fields
+
+If you are used to normal neural networks (like classifiers or predictors), you think of inputs as a tensor of features (like pixels) and outputs as a tensor of class probabilities, with the network being a series of matrix multiplications. That mental model is 100% correct here too. 
+
+To see how that "vector of floats" represents a continuous function, let's look at the forward pass of a PINN.
+
+### 1. The Inputs and Outputs are Coordinates and Displacements
+In a PINN, you feed a single coordinate $(x,y)$ into the network. 
+- **Input:** A vector of 2 floats: $\mathbf{x}_{\text{in}} = [x, y]^T$ (e.g., `[0.5, 0.2]`).
+- **Output:** A vector of 2 floats: $\mathbf{u}_{\text{out}} = [u_x, u_y]^T$ (e.g., `[-0.01, -0.05]`).
+
+### 2. A 1-Layer Network Example
+To see why this is a continuous function, let's write out a simple 1-layer Multi-Layer Perceptron (MLP) with a Tanh activation function:
+
+$$\mathbf{u}(x, y) = \mathbf{W}_2 \tanh\left( \mathbf{W}_1 \begin{bmatrix} x \\ y \end{bmatrix} + \mathbf{b}_1 \right) + \mathbf{b}_2$$
+
+If we write out the equation for the output $u_x$ using the individual float weights and biases:
+
+$$u_x(x, y) = w'_{11} \tanh(w_{11} x + w_{12} y + b_{11}) + w'_{12} \tanh(w_{21} x + w_{22} y + b_{12}) + b'_{11}$$
+
+This equation is a classic, continuous mathematical function of two variables ($x$ and $y$). 
+- For *any* float value of $x$ and $y$ you feed in, you get a float value of $u_x$ out.
+- There are no gaps or jumps because $\tanh$ is smooth.
+
+### 3. Computing derivatives using PyTorch `autograd`
+Because the equation for $u_x(x,y)$ is analytically defined by the weights and activations, we can compute the derivative $\frac{\partial u_x}{\partial x}$ at any point $(x,y)$ using the standard calculus chain rule.
+
+In PyTorch, you do this by setting `requires_grad=True` on your input coordinate vector and calling `torch.autograd.grad`:
+
+```python
+import torch
+
+# 1. Input coordinate (2 floats)
+coord = torch.tensor([[0.5, 0.2]], requires_grad=True) # shape (1, 2)
+
+# 2. Forward pass: outputs displacement (2 floats)
+u = model(coord) # u = [u_x, u_y]
+
+# 3. Compute du_x / dx analytically using Autograd
+du_dx = torch.autograd.grad(
+    outputs=u[:, 0], # u_x
+    inputs=coord, 
+    grad_outputs=torch.ones_like(u[:, 0]),
+    create_graph=True
+)[0][:, 0] # first component is wrt x
+```
+
+No mesh is needed because PyTorch is not doing finite differences (like $(u(x+\Delta x) - u(x))/\Delta x$). It is evaluating the exact analytical derivative of the network's layers at that specific coordinate.
+
 
 
 
