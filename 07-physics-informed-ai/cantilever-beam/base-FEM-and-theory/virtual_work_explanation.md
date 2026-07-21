@@ -222,4 +222,32 @@ $$\left( \frac{G H}{L} - \frac{3 G^2 H L}{C_{11} H^2 + 4 G L^2} \right) v_L = F$
 
 Once you solve for $v_L$ and $\theta_L$, you plug them directly back into the kinematic ansatz in step 1 to get the explicit continuous field $\mathbf{u}(x, y)$.
 
+---
+
+## 7. Connection to the Galerkin Method
+
+Yes, this is exactly the **Bubnov-Galerkin** approach (often just called the Galerkin method). 
+
+In the Galerkin method, the governing differential equations (strong form) are converted into a weak form (which is mathematically identical to the Principle of Virtual Work). You then project this weak form onto a finite-dimensional subspace using two key rules:
+1. **Trial Space:** Approximate the solution $\mathbf{u}(x, y)$ using a linear combination of shape functions (the ansatz):
+   $$\mathbf{u} = \sum_{j=1}^N \boldsymbol{\Phi}_j(x, y) q_j$$
+2. **Test Space:** Choose the virtual/test functions $\delta \mathbf{u}$ from the *same* subspace:
+   $$\delta \mathbf{u} = \sum_{i=1}^N \boldsymbol{\Phi}_i(x, y) \delta q_i$$
+
+### Orthogonality and the Equations
+The weak form requires the virtual work to vanish for all kinematically admissible test functions. When we substitute the approximations into the weak form, we get:
+
+$$\sum_{i=1}^N \delta q_i \cdot \text{Residual}_i(q_1, q_2, \dots, q_N) = 0$$
+
+Because the virtual variations $\delta q_i$ are arbitrary and independent, the only way this statement holds is if the residual projected onto each test function is individually zero:
+
+$$\text{Residual}_i(q_1, q_2, \dots, q_N) = 0 \quad \text{for } i = 1, \dots, N$$
+
+In your 2-degree-of-freedom case ($N = 2$):
+- $\boldsymbol{\Phi}_1(x, y)$ is the shape function associated with the displacement $v$ ($\mathbf{H}_v$).
+- $\boldsymbol{\Phi}_2(x, y)$ is the shape function associated with the rotation $\theta$ ($\mathbf{H}_{\theta}$).
+
+By testing the virtual work with the first shape function (setting $\delta v \neq 0$, $\delta \theta = 0$), you get the first equation. By testing with the second shape function (setting $\delta v = 0$, $\delta \theta \neq 0$), you get the second. This is the exact projection/orthogonality principle used in Galerkin finite elements.
+
+
 
