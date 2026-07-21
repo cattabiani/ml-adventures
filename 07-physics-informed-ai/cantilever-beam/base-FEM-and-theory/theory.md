@@ -65,6 +65,8 @@ $$\frac{\partial \sigma_{yx}}{\partial x} + \frac{\partial \sigma_{yy}}{\partial
 We model a rectangular domain of length $L$ and height $H$:
 * Domain $\Omega = [0, L] \times [0, H]$
 
+Under the assumption of **small deformations** (infinitesimal strain theory), boundary conditions are formulated and integrated in the reference (undeformed) configuration. Therefore, the boundary normals and shapes are assumed to remain constant during deformation.
+
 ### 1. Clamped Boundary (Left Edge at $x = 0$)
 The displacement is completely constrained:
 * $u_x(0, y) = 0$
