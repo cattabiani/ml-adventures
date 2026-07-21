@@ -356,6 +356,33 @@ If you have experimental displacement data (e.g., from Digital Image Correlation
 ### 4. High-Dimensional Problems
 In traditional FEM, the computational cost grows exponentially with the number of dimensions (curse of dimensionality). For stochastic/probabilistic mechanics or high-dimensional parameter spaces, the mesh-free, sample-based optimization of Deep Ritz scales much better.
 
+---
+
+## 11. How does the "Mesh-Free" aspect actually work?
+
+To understand why PINNs and the Deep Ritz Method are mesh-free, consider how FEM uses a mesh versus how a neural network represents a field.
+
+### 1. How Derivatives are Computed
+- **In FEM (Mesh-dependent):** 
+  The displacement field $\mathbf{u}(x,y)$ is not a continuous analytical function. It is only defined at the nodes. To find the strain $\boldsymbol{\varepsilon} = \frac{\partial u}{\partial x}$ at an arbitrary point inside an element, FEM must interpolate between the nodal values using the local element shape functions:
+  $$\mathbf{u}(x,y) \approx \sum_i N_i(x,y) \mathbf{U}_i$$
+  Without the elements (the mesh connectivity and shape functions), you cannot compute derivatives.
+- **In PINNs (Mesh-free):**
+  The displacement is represented by a neural network $\mathbf{u}_{\theta}(x,y)$, which is a single, globally defined, continuously differentiable function. 
+  Because the network consists of analytical functions (e.g., linear layers and differentiable activations like $\tanh$), you can compute the exact derivatives (gradients) at **any coordinate** $(x,y)$ using **Automatic Differentiation (AD)** (the backpropagation chain rule through the network's layers, with respect to the input coordinates $x, y$):
+  $$\frac{\partial u_x}{\partial x} = \text{autograd}(\mathbf{u}_{\theta}, x)$$
+  This requires no mesh, shape functions, or nodal connectivity. You just feed any coordinate $(x,y)$ into the autograd engine.
+
+### 2. How Domain Integrals or Residuals are Evaluated
+- **In FEM (Mesh-dependent):**
+  To solve the equations, you must integrate the bilinear and linear forms over the domain $\Omega$. Because the shape functions are local piecewise functions, you must integrate element-by-element using Gauss quadrature (sampling points at specific mathematical locations inside each element).
+- **In PINNs / Deep Ritz (Mesh-free):**
+  - **For PINNs (Strong Form):** There are no integrals. You evaluate the strong-form PDE residual at a set of randomly sampled "collocation points" $\{ (x_i, y_i) \}_{i=1}^N$ distributed inside the domain (using simple random sampling or Latin Hypercube sampling). You just minimize the sum of square residuals at these discrete points.
+  - **For Deep Ritz (Weak Form / Energy):** You do have to compute the integral of the energy density $\int_{\Omega} \mathcal{U}(\mathbf{u}_{\theta}) \, d\Omega$. However, instead of integrating over elements, you use **Monte Carlo Integration** (or quasi-Monte Carlo). You sample random points $\{ (x_i, y_i) \}_{i=1}^N$ in the domain and approximate the integral as:
+    $$\int_{\Omega} g(x,y) \, d\Omega \approx \frac{\text{Volume}(\Omega)}{N} \sum_{i=1}^N g(x_i, y_i)$$
+    The accuracy of this integration scales with the number of random samples $N$, completely bypassing the need for structured element integration.
+
+
 
 
 
