@@ -8,22 +8,29 @@ from dolfinx.fem.petsc import LinearProblem
 import ufl
 import gmsh
 
-# 1. Define Material and Boundary Parameters
-E = 1000.0
-nu = 0.3
-mu = E / (2.0 * (1.0 + nu))
-lambda_ = E * nu / ((1.0 + nu) * (1.0 - 2.0 * nu))
-
-clamped_name = "clamped"
-traction_name = "traction"
-traction_force = [0.0, -1.0]
-
-# 2. Load Geometry and Generate Mesh using Gmsh
+# 1. Load Geometry and Generate Mesh using Gmsh
 current_dir = os.path.dirname(os.path.abspath(__file__))
 geo_path = os.path.join(current_dir, "..", "cantilever.geo")
 
 gmsh.initialize()
+# Hide terminal logging from gmsh
+gmsh.option.setNumber("General.Terminal", 0)
 gmsh.open(geo_path)
+
+# Query parameters from Gmsh ONELAB variables
+E = gmsh.onelab.getNumber("Material/E")[0]
+nu = gmsh.onelab.getNumber("Material/nu")[0]
+mu = gmsh.onelab.getNumber("Material/mu")[0]
+lambda_ = gmsh.onelab.getNumber("Material/lambda")[0]
+traction_force = [
+    gmsh.onelab.getNumber("Load/traction_force_x")[0],
+    gmsh.onelab.getNumber("Load/traction_force_y")[0]
+]
+
+clamped_name = "clamped"
+traction_name = "traction"
+
+# Generate 2D mesh
 gmsh.model.mesh.generate(2)
 
 # Import Gmsh model to DOLFINx Mesh
@@ -34,11 +41,14 @@ domain = mesh_data.mesh
 facet_tags = mesh_data.facet_tags
 physical_groups = mesh_data.physical_groups
 
-# print info about the loaded mesh
+# print info about the loaded mesh and parameters
 print("Mesh loaded successfully!")
 print(f"Topology dimension: {domain.topology.dim}")
 print(f"Geometry dimension: {domain.geometry.dim}")
 print(f"Physical groups available: {list(physical_groups.keys())}")
+print(f"Material Constants: E = {E}, nu = {nu}")
+print(f"Lame parameters: mu = {mu:.3f}, lambda = {lambda_:.3f}")
+print(f"Traction force: {traction_force}")
 
 # # 3. Vector Function Space for Displacements
 # V = fem.functionspace(domain, ("Lagrange", 1, (domain.geometry.dim,)))
@@ -84,4 +94,3 @@ print(f"Physical groups available: {list(physical_groups.keys())}")
 # max_disp_y = np.min(u_values[:, 1])  # Maximum downward deflection
 # print("\nDOLFINx 2D Cantilever Beam (Gmsh-driven) Solver")
 # print(f"Maximum tip deflection (u_y): {max_disp_y:.6f}")
-
