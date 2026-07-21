@@ -5,8 +5,14 @@ DefineConstant[ E = {1000.0, Name "Material/E"} ];
 DefineConstant[ nu = {0.3, Name "Material/nu"} ];
 DefineConstant[ mu = {E / (2.0 * (1.0 + nu)), Name "Material/mu"} ];
 DefineConstant[ lambda = {E * nu / ((1.0 + nu) * (1.0 - 2.0 * nu)), Name "Material/lambda"} ];
-DefineConstant[ traction_force_x = {0.0, Name "Load/traction_force_x"} ];
-DefineConstant[ traction_force_y = {-1.0, Name "Load/traction_force_y"} ];
+
+// Dirichlet BCs for "clamped" group
+DefineConstant[ clamped_u_x = {0.0, Name "BC/clamped/u_x"} ];
+DefineConstant[ clamped_u_y = {0.0, Name "BC/clamped/u_y"} ];
+
+// Neumann Loads for "traction" group
+DefineConstant[ traction_t_x = {0.0, Name "Load/traction/t_x"} ];
+DefineConstant[ traction_t_y = {-1.0, Name "Load/traction/t_y"} ];
 
 Point(1) = {0, 0, 0, lc};
 Point(2) = {L, 0, 0, lc};
