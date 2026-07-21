@@ -281,6 +281,48 @@ $$\mathbf{K} \mathbf{U} = \mathbf{F}$$
 
 where $\mathbf{U} = [U_1, U_2, \dots, U_{M \times d}]^T$ contains all nodal displacements.
 
+---
+
+## 9. PINNs and Discrete Residual Loss: $\mathbf{K}\mathbf{U} - \mathbf{F}$
+
+Using the residual of the discretized algebraic system as a loss function:
+
+$$\mathcal{L}_{\text{discrete}}(\theta) = \|\mathbf{K} \mathbf{U}(\theta) - \mathbf{F}\|^2$$
+
+is technically possible (often called **discrete residual minimization**), but it is not a standard PINN and has severe practical drawbacks.
+
+Here is the comparison between how PINNs, the Deep Ritz Method, and the discrete loss approach work.
+
+### 1. The Discrete Residual Loss: $\|\mathbf{K}\mathbf{U}(\theta) - \mathbf{F}\|^2$
+In this approach, you parameterize the nodal displacements using a neural network $\mathbf{U}(\theta)$. 
+- **Pros:** Enforces the physical constraints directly on the discretized mesh.
+- **Cons:** You must construct the mesh, compute element stiffnesses, and assemble the global $\mathbf{K}$ and $\mathbf{F}$ matrices first. If you have already done this, using a standard linear solver (like conjugate gradient or sparse LU) will solve $\mathbf{K}\mathbf{U} = \mathbf{F}$ to machine precision in milliseconds. Training a neural network to minimize the residual is mathematically redundant, orders of magnitude slower, and less accurate.
+
+### 2. Physics-Informed Neural Networks (PINNs) — Strong Form
+A standard PINN is **completely mesh-free**. The neural network directly models the continuous displacement field:
+
+$$\mathbf{u}_{\theta}(x, y) = \begin{bmatrix} u_x(x, y; \theta) \\ u_y(x, y; \theta) \end{bmatrix}$$
+
+The loss function is evaluated at random collocation points inside the domain $\Omega$ and on the boundaries $\partial\Omega$:
+
+$$\mathcal{L}(\theta) = \mathcal{L}_{\text{PDE}}(\theta) + \mathcal{L}_{\text{BC}}(\theta)$$
+
+- **PDE Loss:** Minimizes the strong form equilibrium equations using automatic differentiation to compute the derivatives:
+  $$\mathcal{L}_{\text{PDE}} = \int_{\Omega} \|\text{div}(\boldsymbol{\sigma}(\mathbf{u}_{\theta}))\|^2 \, d\Omega \approx \frac{1}{N_c} \sum_{i=1}^{N_c} \|\text{div}(\boldsymbol{\sigma}(\mathbf{u}_{\theta}(x_i, y_i)))\|^2$$
+- **Boundary Condition Loss:** Enforces the clamped and traction boundary conditions:
+  $$\mathcal{L}_{\text{BC}} = \frac{1}{N_b} \sum_{j=1}^{N_b} \|\mathbf{u}_{\theta}(0, y_j)\|^2 + \frac{1}{N_t} \sum_{k=1}^{N_t} \|\boldsymbol{\sigma}(\mathbf{u}_{\theta}(L, y_k)) \mathbf{n} - \mathbf{T}\|^2$$
+
+### 3. The Deep Ritz / Deep Energy Method (DEM) — Weak Form
+If you want to use the **Principle of Virtual Work / Energy** with neural networks, you use the **Deep Ritz Method** (or Deep Energy Method). Instead of solving the strong-form differential equations, you minimize the total potential energy functional directly:
+
+$$\mathcal{L}_{\text{energy}}(\theta) = \Pi(\mathbf{u}_{\theta}) = \int_{\Omega} \left( \frac{1}{2} \boldsymbol{\varepsilon}(\mathbf{u}_{\theta})^T \mathbf{C} \boldsymbol{\varepsilon}(\mathbf{u}_{\theta}) \right) d\Omega - \int_{\Gamma_t} \mathbf{u}_{\theta}^T \mathbf{T} \, d\Gamma$$
+
+- The neural network $\mathbf{u}_{\theta}(x, y)$ is the trial function.
+- The derivatives for strain $\boldsymbol{\varepsilon}(\mathbf{u}_{\theta})$ are computed using automatic differentiation.
+- The integrals are evaluated using Monte Carlo integration or quadrature points.
+- By minimizing $\mathcal{L}_{\text{energy}}(\theta)$, the network naturally converges to the equilibrium solution (where the first variation/virtual work is zero).
+
+
 
 
 
