@@ -634,6 +634,28 @@ $f_x$ and $f_y$ are **not** unknowns. They are the **known external body forces*
 
 Because $f_x$ and $f_y$ are known constants (or known functions of coordinate inputs $x, y$), you do not need to calculate them from the network output. You just define them as constants in your python script (e.g., `fx = 0.0`, `fy = 0.0`) and add them directly to the residual expression inside your loss function.
 
+---
+
+## 19. A Physical Intuition of PINNs: Infinitesimal Block Equilibrium
+
+Your physical intuition is 100% correct:
+
+### 1. The Infinitesimal Block Analogy
+The Navier-Cauchy equations:
+
+$$\frac{\partial \sigma_{xx}}{\partial x} + \frac{\partial \sigma_{xy}}{\partial y} = 0$$
+
+are derived in mechanics by drawing a tiny, infinitesimal control block of dimensions $dx \times dy$ inside the material, calculating the normal and shear forces acting on each face, and summing them to zero. 
+
+A PINN does exactly this: at every single collocation point $(x_i, y_i)$, it looks at that infinitesimal block and penalizes the network if the forces on that block do not balance. 
+
+### 2. The Training Step
+The training process mirrors standard deep learning batch optimization:
+1. **Forward Pass (Vectorized):** You feed a batch of e.g. 5,000 coordinate points into the network. PyTorch calculates the displacement, stresses, and the force imbalance for all 5,000 infinitesimal blocks in parallel.
+2. **Loss Evaluation:** You compute the average squared force imbalance across the batch (plus boundary term penalties).
+3. **Backpropagation:** You backpropagate the gradients of this mean loss to update the weights $\theta$, forcing all infinitesimal blocks across the entire domain to reach static equilibrium.
+
+
 
 
 
