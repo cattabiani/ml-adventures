@@ -612,6 +612,29 @@ For each point $i$, you compute:
 - **The derivative orders are different:** PINN requires second-order derivatives of displacements to get the divergence of stress ($\frac{\partial^2 u}{\partial x^2}$). Deep Ritz only requires first-order derivatives ($\frac{\partial u}{\partial x}$) to calculate strain energy density.
 - **Traction BCs:** PINN requires an explicit boundary term $\sum \|\boldsymbol{\sigma}\mathbf{n} - \mathbf{T}\|^2$. Deep Ritz naturally satisfies traction boundaries through the external work term $- \int \mathbf{u}^T \mathbf{T} \, d\Gamma$.
 
+---
+
+## 18. What are $f_x$ and $f_y$?
+
+In the Navier-Cauchy equations:
+
+$$\frac{\partial \sigma_{xx}}{\partial x} + \frac{\partial \sigma_{xy}}{\partial y} + f_x = 0$$
+$$\frac{\partial \sigma_{xy}}{\partial x} + \frac{\partial \sigma_{yy}}{\partial y} + f_y = 0$$
+
+$f_x$ and $f_y$ are **not** unknowns. They are the **known external body forces** per unit volume acting on the material. 
+
+### Common Examples:
+1. **Gravity:** If the beam has density $\rho$ and gravity $g$ acts downward along the $y$-axis:
+   $$f_x = 0, \quad f_y = -\rho g$$
+2. **No Body Force:** If you are ignoring gravity and the beam is only loaded by forces at its boundary/tip (which is typical for a simple cantilever model):
+   $$f_x = 0, \quad f_y = 0$$
+   In this case, the equations simplify to pure divergence of stress:
+   $$\frac{\partial \sigma_{xx}}{\partial x} + \frac{\partial \sigma_{xy}}{\partial y} = 0$$
+   $$\frac{\partial \sigma_{xy}}{\partial x} + \frac{\partial \sigma_{yy}}{\partial y} = 0$$
+
+Because $f_x$ and $f_y$ are known constants (or known functions of coordinate inputs $x, y$), you do not need to calculate them from the network output. You just define them as constants in your python script (e.g., `fx = 0.0`, `fy = 0.0`) and add them directly to the residual expression inside your loss function.
+
+
 
 
 
