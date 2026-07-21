@@ -655,6 +655,44 @@ The training process mirrors standard deep learning batch optimization:
 2. **Loss Evaluation:** You compute the average squared force imbalance across the batch (plus boundary term penalties).
 3. **Backpropagation:** You backpropagate the gradients of this mean loss to update the weights $\theta$, forcing all infinitesimal blocks across the entire domain to reach static equilibrium.
 
+---
+
+## 20. Where did the Virtual/Test Fields go in Deep Ritz?
+
+This is a profound question. In the Principle of Virtual Work (or Galerkin), you need virtual test displacements $\delta \mathbf{u}$ to check equilibrium:
+
+$$\delta W_{\text{int}}(\mathbf{u}, \delta \mathbf{u}) - \delta W_{\text{ext}}(\delta \mathbf{u}) = 0 \quad \forall \delta \mathbf{u}$$
+
+But in Deep Ritz, you only have one neural network representing $\mathbf{u}_{\theta}(x, y)$. You do not define any virtual test functions or test basis functions. 
+
+So how does the equilibrium balance get satisfied without testing? 
+
+### 1. Ritz vs. Galerkin Equivalence
+Deep Ritz relies on a core theorem of variational calculus:
+> For a self-adjoint system, finding the field $\mathbf{u}$ that satisfies the virtual work equation for all arbitrary $\delta \mathbf{u}$ is mathematically equivalent to finding the field $\mathbf{u}$ that **minimizes** the total potential energy functional:
+> $$\mathbf{u} = \arg\min_{\mathbf{v}} \Pi(\mathbf{v})$$
+
+By minimizing the energy $\Pi(\mathbf{u}_{\theta})$ directly, we guarantee that at the minimum, the first variation (virtual work) is zero.
+
+### 2. The Network's Weights *Are* the Test Space
+To see how this works computationally, consider what happens when you train the network. You minimize the energy functional $\Pi(\mathbf{u}_{\theta})$ with respect to the network weights $\theta$:
+
+$$\frac{\partial \Pi(\mathbf{u}_{\theta})}{\partial \theta_k} = 0 \quad \text{for all weights } \theta_k$$
+
+Using the chain rule, this derivative is:
+
+$$\frac{\partial \Pi(\mathbf{u}_{\theta})}{\partial \theta_k} = \int_{\Omega} \left( \text{stresses} \right) \cdot \frac{\partial \boldsymbol{\varepsilon}(\mathbf{u}_{\theta})}{\partial \theta_k} \, d\Omega - \int_{\Gamma_t} \mathbf{T} \cdot \frac{\partial \mathbf{u}_{\theta}}{\partial \theta_k} \, d\Gamma = 0$$
+
+Look at this equation. It is exactly the Principle of Virtual Work where the virtual variation $\delta \mathbf{u}$ has been replaced by the **sensitivity of the neural network with respect to its weights**:
+
+$$\delta \mathbf{u}_k(x, y) = \frac{\partial \mathbf{u}_{\theta}(x, y)}{\partial \theta_k}$$
+
+### Summary
+In Deep Ritz, you do not need to construct a test space or a set of orthonormal test functions. The network's weights $\theta_k$ automatically define millions of independent, continuous virtual displacement fields $\delta \mathbf{u}_k = \frac{\partial \mathbf{u}_{\theta}}{\partial \theta_k}$. 
+
+By running backpropagation and driving the gradient of the energy loss with respect to all weights to zero ($\nabla_{\theta} \text{Loss} = 0$), you are forcing the virtual work to vanish for all virtual fields spanned by the network's parameters.
+
+
 
 
 
