@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 import numpy as np
 from mpi4py import MPI
 import dolfinx
@@ -9,13 +9,12 @@ import ufl
 import gmsh
 
 # 1. Load Geometry and Generate Mesh using Gmsh
-current_dir = os.path.dirname(os.path.abspath(__file__))
-geo_path = os.path.join(current_dir, "..", "cantilever.geo")
+geo_path = Path(__file__).parent.parent / "cantilever.geo"
 
 gmsh.initialize()
 # Hide terminal logging from gmsh
 gmsh.option.setNumber("General.Terminal", 0)
-gmsh.open(geo_path)
+gmsh.open(str(geo_path))
 
 # Query parameters from Gmsh ONELAB variables
 E = gmsh.onelab.getNumber("Material/E")[0]
