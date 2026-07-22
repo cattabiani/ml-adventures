@@ -1,10 +1,8 @@
-# ML Adventures — Project Standards
+# ML Adventures — Agent Guide
 
 ## Structure
-- Each project lives in its own folder with its own README
-- Notebooks (for Kaggle/Colab training) go in a `notebooks/` subfolder per project
-- Shared utilities go in `shared/`
-- Top-level README tracks progress
+- Each project lives in its own numbered folder with its own `README.md` and `TASKS.md`
+- Top-level `README.md` tracks overall progress
 
 ## Git Workflow
 - Always work and commit directly on the `main` branch. Do not create new branches under any circumstances.
@@ -17,8 +15,8 @@
 - Include results (metrics, plots, examples) in each project's README
 
 ## Training
-- Training runs happen on Kaggle or Colab (free tier Graphics Processing Units (GPUs))
-- Keep model sizes and datasets reasonable for free-tier compute
+- Training runs on a local GPU (RTX 4070 Ti, CUDA) or Kaggle/Colab free-tier GPUs
+- Keep model sizes and datasets reasonable for free-tier compute when targeting Kaggle/Colab
 - Log experiments with Weights & Biases when applicable
 
 ## Jargon
