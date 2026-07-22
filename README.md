@@ -7,8 +7,8 @@ An AI-powered learning project. I'm a senior software engineer (C++/Python, High
 - **I write the code.** The AI provides direction, asks questions, reviews my work, and pushes back when I'm wrong.
 - **Framing, design, and task documents** are written by the AI under my supervision.
 - **Projects are real and complete** — each one trains a model, shows results, and has a clear README.
-- **Training runs** on Kaggle/Colab free-tier Graphics Processing Units (GPUs).
-- **AI steering** lives in `.kiro/steering/` — it sets ground rules for how the AI interacts with me (teacher, not substitute).
+- **Training runs** on a local GPU (RTX 4070 Ti, CUDA) or Kaggle/Colab free-tier Graphics Processing Units (GPUs).
+- **AI steering** lives in `AGENTS.md` — it sets ground rules for how the AI interacts with me (teacher, not substitute).
 - **Code is left unpolished on purpose** to make it clear that it is my own work and not the work of an AI.
 
 ## Roadmap
