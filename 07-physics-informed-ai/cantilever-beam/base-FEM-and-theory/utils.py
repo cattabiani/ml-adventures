@@ -35,7 +35,9 @@ def extract_boundary_conditions(onelab_vars):
                     neumann_loads[group_name][0] = val
                 elif comp == "t_y":
                     neumann_loads[group_name][1] = val
-                    
+
+    dirichlet_bcs = {name: np.array(vals, dtype=np.float64) for name, vals in dirichlet_bcs.items()}
+    neumann_loads = {name: np.array(vals, dtype=np.float64) for name, vals in neumann_loads.items()}
     return dirichlet_bcs, neumann_loads
 
 def load_gmsh_cantilever(geo_path: Path, comm=MPI.COMM_SELF):
